@@ -1,0 +1,136 @@
+html, body {
+    font-family: helvetica-neue, "Helvetica Neue";
+}
+
+div#content {
+    width: 700px;
+    margin: auto;
+}
+
+div#header {
+    margin-top: 50px;
+    margin-bottom: 12pt;
+    text-align: center;
+    color: #678;
+}
+
+div#header h1 {
+    font-variant: small-caps;
+    font-size: 24pt;
+    letter-spacing: 1.2px;
+    font-weight: normal;
+}
+
+div#bm-tool {
+}
+
+div#bm-tool button {
+    font-variant: small-caps;
+}
+
+div#bm-tool div#bm-functions {
+    text-align: center;
+    margin-bottom: 12pt;
+}
+
+div#bm-tool div#bm-search {
+    color: #369;
+    margin-bottom: 12pt;
+}
+
+div#bm-tool div#bm-search input {
+    border: 1px solid #9ab;
+    font-size: 14pt;
+    padding: 5px;
+    color: #369;
+    border-radius: 3px;
+    width: 98%;
+    outline: none;
+    box-shadow: 0px 0px 4px 0px #aaa;
+}
+
+div#bm-tool div#bm-form {
+    display: none;
+    border: 1px solid #9ab;
+    box-shadow: 0px 0px 4px 0px #aaa;
+    padding: 10px;
+    border-radius: 3px;
+    background: #dee4eb;
+    margin-bottom: 12pt;
+}
+
+div#bm-tool div#bm-form label {
+    display: block;
+    margin-bottom: 6pt;
+}
+
+div#bm-tool label span.prompt {
+    display: block;
+    font-size: 10pt;
+    font-style: italic;
+    color: #234;
+}
+
+div#bm-tool label span.widget input {
+    width: 98%;
+    border: 1px solid #9ab;
+    font-size: 14pt;
+    padding: 5px;
+    color: #369;
+    border-radius: 3px;
+    outline: none;
+}
+
+/** LIST **/
+
+div#bm-list {
+}
+
+div#bm-list table {
+    width: 100%;
+}
+
+div#bm-list tr {
+    border-bottom: 1px solid #9ab;
+    color: #9ab;
+}
+
+div#bm-list th {
+    font-variant: small-caps;
+    font-size: 10pt;
+    padding: 4px;
+    color: white;
+    background: #9ab;
+    font-weight: bold;
+}
+
+div#bm-list td {
+    font-size: 10pt;
+    padding: 4px;
+}
+
+div#bm-list td a {
+    color: #369;
+    text-decoration: none;
+}
+
+div#bm-list td a:hover {
+    color: darkred;
+    text-decoration: none;
+}
+
+div#bm-list tr:hover {
+    background: #dee4eb;
+}
+
+/** FOOTER **/
+
+div#footer {
+    margin-top: 50px;
+}
+
+div#footer p {
+    font-size: 10pt;
+    text-align: center;
+    color: #678;
+}
