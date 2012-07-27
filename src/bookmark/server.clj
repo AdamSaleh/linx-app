@@ -6,18 +6,49 @@
    compojure.core)
   (:require
    [bookmark.db :as db]
-   [clojure.data.json :as json]
+   [bookmark.crypto :as crypto]
    [compojure.route :as route]
    [compojure.handler :as handler]
    [ring.adapter.jetty :as jetty]
    [ring.util.response :as resp]
+   [clojure.string :as string]
+   [clojure.data.json :as json]
    [clojure.tools.logging :as log]))
 
 (def ^:private max-age-seconds (* 30 24 60 60)) ;; 30 days
 
+
+
+;;-----------------------------------------------------------------------------
+;; Middleware
+;;-----------------------------------------------------------------------------
+
+(defn- request->str
+  [request]
+  (let [{:keys [uri scheme request-method server-name server-port query-string]} request]
+    (format "%s %s://%s:%s%s%s"
+            (string/upper-case (name request-method))
+            (name scheme)
+            server-name
+            server-port
+            uri
+            (if (empty? query-string) "" (str "?" query-string)))))
+
+(defn- wrap-request-logger
+  [handler]
+  (fn [request]
+    (log/info (request->str request))
+    (handler request)))
+
+(defn- wrap-auth
+  [handler]
+  (fn [request]
+    (handler request)))
+
+;;-----------------------------------------------------------------------------
+
 (defn- with-cookie
   [document cookie-value request]
-  (log/info request)
   (-> (resp/response document)
       (resp/set-cookie "book-app" cookie-value {:domain (:server-name request)
                                                 :port (:server-port request)
@@ -34,7 +65,7 @@
   (-> (resp/response (json/json-str data))
       (resp/content-type "application/json;charset=UTF-8")))
 
-(defroutes app
+(defroutes main-routes
   ;;
   ;;
   ;;
@@ -52,13 +83,26 @@
   ;;
   (GET "/bm/login/" [:as request]
     (let [c (:cookies request)]
-      (log/info "GET /bm/login/ :: COOKIE:" c))
+      (log/info "GET /bm/login/ :: COOKIE:" c)
+      (when-let [cookie (get-in c ["book-app" :value])]
+        (log/info "  decrypted = " (crypto/decrypt cookie))))
     (-> (resp/response "<h1>Okay</h1>")
         (resp/content-type "text/html;charset=UTF-8")
-        (resp/set-cookie "book-app" "anonymous" {:domain (:server-name request)
-                                                 :port (:server-port request)
-                                                 :path "/bm"
-                                                 :max-age max-age-seconds})))
+        (resp/set-cookie "book-app" (crypto/encrypt "anonymous")
+                         {:domain (:server-name request)
+                          :port (:server-port request)
+                          :path "/bm"
+                          :max-age max-age-seconds})))
+  ;;
+  ;;
+  ;;
+  (GET "/bm/logout/" [:as request]
+    (-> (resp/redirect "/bm/login/")
+        (resp/set-cookie "book-app" ""
+                         {:domain (:server-name request)
+                          :port (:server-port request)
+                          :path "/bm"
+                          :max-age -1})))
   ;;
   ;;
   ;;
@@ -74,13 +118,19 @@
   ;;
   (route/not-found "<a href='/bm/'>Page not found.</a>"))
 
+(def ^:private app (-> main-routes
+                       (wrap-request-logger)
+                       (wrap-auth)
+                       (handler/site)))
+
 (def ^:private server (atom nil))
+
 
 (defn- start
   ([opts]
      (log/info "Starting server.")
      (reset! server (jetty/run-jetty
-                     (handler/site (var app))
+                     (var app)
                      (merge {:port 8087 :join? false} opts))))
   ([]
      (start {})))
