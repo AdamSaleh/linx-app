@@ -33,12 +33,12 @@
 
 (defn- read-key-file
   []
-  (log/info "Reading" (key-file))
+  (log/info " - reading:" (key-file))
   (slurp (key-file)))
 
 (defn- save-key-file
   [k]
-  (log/info "Writing new key file to:" (key-file))
+  (log/info " - writing new key file to:" (key-file))
   (let [secret (encoded-key k)]
     (spit (key-file) secret)
     secret))

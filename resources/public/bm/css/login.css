@@ -1,0 +1,61 @@
+div#login-area {
+    text-align: center;
+    margin: auto;
+    width: 60%;
+    margin-top: 4em;
+}
+
+div#login-area button {
+    font-variant: small-caps;
+}
+
+div#login-area div#bm-form {
+    border: 1px solid #9ab;
+    box-shadow: 0px 0px 4px 0px #aaa;
+    padding: 10px;
+    border-radius: 3px;
+    background: #dee4eb;
+    margin-bottom: 12pt;
+    box-shadow: inset 0px 0px 15px 5px #cde;
+}
+
+div#login-area div#bm-form h1 {
+    color: #369;
+    font-size: 16pt;
+    text-shadow: 1px 1px 1px #aaa;
+    letter-spacing: 1.2px;
+}
+
+div#login-area div#bm-form label {
+    display: block;
+    margin-bottom: 6pt;
+    text-align: center;
+}
+
+div#login-area label span.prompt {
+    display: block;
+    font-size: 10pt;
+    font-style: italic;
+    color: #234;
+    margin-top: 1em;
+}
+
+div#login-area label span.widget input {
+    width: 90%;
+    border: 1px solid #9ab;
+    font-size: 14pt;
+    padding: 5px;
+    color: #369;
+    border-radius: 3px;
+    outline: none;
+    text-align: center;
+}
+
+div#login-area div#bm-form-buttons {
+    text-align: center;
+}
+
+div#login-area div#bm-login-errors {
+    font-size: 10pt;
+    color: firebrick;
+}

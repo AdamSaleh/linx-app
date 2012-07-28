@@ -16,11 +16,10 @@
    [clojure.tools.logging :as log]))
 
 (def ^:private max-age-seconds (* 30 24 60 60)) ;; 30 days
-
-
+(def ^:private cookie-name "book-app")
 
 ;;-----------------------------------------------------------------------------
-;; Middleware
+;; Request helpers
 ;;-----------------------------------------------------------------------------
 
 (defn- request->str
@@ -34,94 +33,136 @@
             uri
             (if (empty? query-string) "" (str "?" query-string)))))
 
+(defn- public-path?
+  "Is the request allowed to proceed even if not authorized/authenticated?"
+  [request]
+  (let [u (:uri request)]
+    (or (.startsWith u "/bm/login")
+        (.startsWith u "/bm/css")
+        (.startsWith u "/bm/js")
+        (.startsWith u "/bm/html")
+        (.startsWith u "/bm/api/auth"))))
+
+(defn- unset-cookie!
+  [response request]
+  (resp/set-cookie response cookie-name ""
+                   {:domain (:server-name request)
+                    :port (:server-port request)
+                    :path "/bm"
+                    :max-age -1}))
+
+(defn- cookie!
+  "Adds the set-cookie command to the response."
+  [response request cookie-value]
+  (resp/set-cookie response cookie-name cookie-value {:domain (:server-name request)
+                                                      :port (:server-port request)
+                                                      :path "/bm"
+                                                      :max-age max-age-seconds}))
+
+(defn- cookie
+  [request]
+  "Returns an evalution of the decrypted cookie, if it exists."
+  (if-let [cookie (get-in (:cookies request) [cookie-name :value])]
+    (read-string (crypto/decrypt cookie))
+    nil))
+
+(defn- logged-in?
+  "The request is logged in if a cookie is present."
+  [request]
+  (not (nil? (cookie request))))
+
+(defn- authentic?
+  "Is the user implied by the cookie authentic?"
+  [request]
+  (if-let [cookie (cookie request)]
+    (db/exists? (:email cookie))
+    false))
+
+(defn- status-response
+  [status]
+  (-> (resp/response "")
+      (resp/status status)))
+
+;;-----------------------------------------------------------------------------
+;; Middleware
+;;-----------------------------------------------------------------------------
+
 (defn- wrap-request-logger
+  "Logs the request, and that's that."
   [handler]
   (fn [request]
     (log/info (request->str request))
     (handler request)))
 
 (defn- wrap-auth
+  "Redirects request to the login page if not authenticated/authorized."
   [handler]
   (fn [request]
-    (handler request)))
+    (log/info " - cookie:" (cookie request))
+    (cond (authentic? request)
+          (handler request)
+          (public-path? request)
+          (handler request)
+          :else
+          (do
+            (log/info (format " - Denied access on %s, sending to /bm/login/." (:uri request)))
+            (resp/redirect "/bm/login/")))))
 
 ;;-----------------------------------------------------------------------------
-
-(defn- with-cookie
-  [document cookie-value request]
-  (-> (resp/response document)
-      (resp/set-cookie "book-app" cookie-value {:domain (:server-name request)
-                                                :port (:server-port request)
-                                                :path "/bm"
-                                                :max-age max-age-seconds})))
-
-(defn- as-html
-  [data]
-  (-> (resp/response data)
-      (resp/content-type "text/html;charset=UTF-8")))
+;; Renders
+;;-----------------------------------------------------------------------------
 
 (defn- as-json
   [^APersistentMap data]
   (-> (resp/response (json/json-str data))
       (resp/content-type "application/json;charset=UTF-8")))
 
+;;-----------------------------------------------------------------------------
+;; Routes
+;;-----------------------------------------------------------------------------
+
 (defroutes main-routes
-  ;;
-  ;;
-  ;;
   (GET "/bm" []
     (resp/redirect "/bm/"))
-  ;;
-  ;;
-  ;;
-  (GET "/bm/" [:as request]
-    (let [c (:cookies request)]
-      (log/info "GET /bm/ :: COOKIE:" c))
-    (resp/resource-response "index.html" {:root "public/bm"}))
-  ;;
-  ;;
-  ;;
-  (GET "/bm/login/" [:as request]
-    (let [c (:cookies request)]
-      (log/info "GET /bm/login/ :: COOKIE:" c)
-      (when-let [cookie (get-in c ["book-app" :value])]
-        (log/info "  decrypted = " (crypto/decrypt cookie))))
-    (-> (resp/response "<h1>Okay</h1>")
-        (resp/content-type "text/html;charset=UTF-8")
-        (resp/set-cookie "book-app" (crypto/encrypt "anonymous")
-                         {:domain (:server-name request)
-                          :port (:server-port request)
-                          :path "/bm"
-                          :max-age max-age-seconds})))
-  ;;
-  ;;
-  ;;
-  (GET "/bm/logout/" [:as request]
-    (-> (resp/redirect "/bm/login/")
-        (resp/set-cookie "book-app" ""
-                         {:domain (:server-name request)
-                          :port (:server-port request)
-                          :path "/bm"
-                          :max-age -1})))
-  ;;
-  ;;
-  ;;
-  (context "/bm/api" []
-    (POST "/search/" [terms]
-      (as-json (db/search terms))))
-  ;;
-  ;;
+
+  (context "/bm" []
+
+    (GET "/" []
+      (resp/resource-response "html/index.html" {:root "public/bm"}))
+
+    (GET "/login" []
+      (resp/redirect "/bm/login/"))
+
+    (GET "/login/" [:as request]
+      (resp/resource-response "html/login.html" {:root "public/bm"}))
+
+    (GET "/logout/" [:as request]
+      (-> (resp/redirect "/bm/login/")
+          (unset-cookie! request)))
+
+    (context "/api" []
+      ;;
+      (POST "/auth/" [email password :as request]
+        (log/info " - request to auth." {:email email :password password})
+        (if-let [user (db/authentic? email password)]
+          (do
+            (log/info " - valid auth.")
+            (-> (resp/response "")
+                (cookie! request (crypto/encrypt (str user)))))
+          (do
+            (log/info " - invalid auth.")
+            (status-response 403))))
+      ;;
+      (POST "/search/" [terms]
+        (as-json (db/search terms)))))
   ;;
   (route/resources "/")
-  ;;
-  ;;
-  ;;
   (route/not-found "<a href='/bm/'>Page not found.</a>"))
 
 (def ^:private app (-> main-routes
-                       (wrap-request-logger)
                        (wrap-auth)
-                       (handler/site)))
+                       (handler/site)
+                       (wrap-request-logger)))
 
 (def ^:private server (atom nil))
 
