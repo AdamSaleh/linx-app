@@ -133,3 +133,11 @@ div#footer p {
     text-align: center;
     color: #678;
 }
+
+div#footer a {
+    color: #369;
+}
+
+div#footer a:hover {
+    color: darkred;
+}

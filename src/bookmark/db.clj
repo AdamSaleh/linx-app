@@ -61,7 +61,7 @@
       (string/split #"\s+")
       (set)))
 
-(defn re-quote
+(defn- re-quote
   [s]
   (format "^\\Q%s\\E$" (string/trim s)))
 

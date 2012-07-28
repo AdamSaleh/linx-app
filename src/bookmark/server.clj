@@ -66,11 +66,6 @@
     (read-string (crypto/decrypt cookie))
     nil))
 
-(defn- logged-in?
-  "The request is logged in if a cookie is present."
-  [request]
-  (not (nil? (cookie request))))
-
 (defn- authentic?
   "Is the user implied by the cookie authentic?"
   [request]
@@ -94,11 +89,31 @@
     (log/info (request->str request))
     (handler request)))
 
+(defn- wrap-cookie-test
+  "Makes sure the cookie is decryptable."
+  [handler]
+  (fn [request]
+    (let [cookie (get-in (:cookies request) [cookie-name :value])]
+      (cond (nil? cookie)
+            (handler request)
+
+            (let [data (read-string (crypto/decrypt cookie))]
+              (or (nil? (:email data))
+                  (nil? (:password data))))
+
+            (do
+              (log/info " - invalid cookie, resetting.")
+              (-> (resp/redirect "/bm/login/")
+                  (unset-cookie! request)))
+
+            :else
+            (handler request)))))
+
 (defn- wrap-auth
   "Redirects request to the login page if not authenticated/authorized."
   [handler]
   (fn [request]
-    (log/info " - cookie:" (cookie request))
+;;    (log/info " - cookie:" (cookie request))
     (cond (authentic? request)
           (handler request)
           (public-path? request)
@@ -128,13 +143,17 @@
   (context "/bm" []
 
     (GET "/" []
-      (resp/resource-response "html/index.html" {:root "public/bm"}))
+      (-> (resp/resource-response "html/index.html" {:root "public/bm"})
+          (resp/content-type "text/html; charset=UTF-8")))
 
     (GET "/login" []
       (resp/redirect "/bm/login/"))
 
     (GET "/login/" [:as request]
-      (resp/resource-response "html/login.html" {:root "public/bm"}))
+      (if (authentic? request)
+        (resp/redirect "/bm/")
+        (-> (resp/resource-response "html/login.html" {:root "public/bm"})
+            (resp/content-type "text/html; charset=UTF-8"))))
 
     (GET "/logout/" [:as request]
       (-> (resp/redirect "/bm/login/")
@@ -161,6 +180,7 @@
 
 (def ^:private app (-> main-routes
                        (wrap-auth)
+                       (wrap-cookie-test)
                        (handler/site)
                        (wrap-request-logger)))
 
