@@ -1,7 +1,5 @@
 (ns bookmark.server
   (:gen-class)
-  (:import
-   [clojure.lang APersistentMap])
   (:use
    compojure.core)
   (:require
@@ -22,26 +20,12 @@
 ;; Request helpers
 ;;-----------------------------------------------------------------------------
 
-(defn- request->str
+(defn- cookie
   [request]
-  (let [{:keys [uri scheme request-method server-name server-port query-string]} request]
-    (format "%s %s://%s:%s%s%s"
-            (string/upper-case (name request-method))
-            (name scheme)
-            server-name
-            server-port
-            uri
-            (if (empty? query-string) "" (str "?" query-string)))))
-
-(defn- public-path?
-  "Is the request allowed to proceed even if not authorized/authenticated?"
-  [request]
-  (let [u (:uri request)]
-    (or (.startsWith u "/bm/login")
-        (.startsWith u "/bm/css")
-        (.startsWith u "/bm/js")
-        (.startsWith u "/bm/html")
-        (.startsWith u "/bm/api/auth"))))
+  "Returns an evalution of the decrypted cookie, if it exists."
+  (if-let [cookie (get-in (:cookies request) [cookie-name :value])]
+    (read-string (crypto/decrypt cookie))
+    nil))
 
 (defn- unset-cookie!
   [response request]
@@ -59,12 +43,28 @@
                                                       :path "/bm"
                                                       :max-age max-age-seconds}))
 
-(defn- cookie
+(defn- request->str
   [request]
-  "Returns an evalution of the decrypted cookie, if it exists."
-  (if-let [cookie (get-in (:cookies request) [cookie-name :value])]
-    (read-string (crypto/decrypt cookie))
-    nil))
+  (let [{:keys [uri scheme request-method server-name server-port query-string]} request
+        email (:email (cookie request))]
+    (format "{:user '%s', :method '%s', :url '%s://%s%s%s%s'}"
+            (if (nil? email) "unknown" email)
+            (string/lower-case (name request-method))
+            (name scheme)
+            server-name
+            (if (= server-port 80) "" (":" server-port))
+            uri
+            (if (empty? query-string) "" (str "?" query-string)))))
+
+(defn- public-path?
+  "Is the request allowed to proceed even if not authorized/authenticated?"
+  [request]
+  (let [u (:uri request)]
+    (or (.startsWith u "/bm/login")
+        (.startsWith u "/bm/css")
+        (.startsWith u "/bm/js")
+        (.startsWith u "/bm/html")
+        (.startsWith u "/bm/api/auth"))))
 
 (defn- authentic?
   "Is the user implied by the cookie authentic?"
@@ -113,7 +113,6 @@
   "Redirects request to the login page if not authenticated/authorized."
   [handler]
   (fn [request]
-;;    (log/info " - cookie:" (cookie request))
     (cond (authentic? request)
           (handler request)
           (public-path? request)
@@ -124,68 +123,86 @@
             (resp/redirect "/bm/login/")))))
 
 ;;-----------------------------------------------------------------------------
-;; Renders
+;; Renderers
 ;;-----------------------------------------------------------------------------
 
 (defn- as-json
-  [^APersistentMap data]
+  [data]
   (-> (resp/response (json/json-str data))
       (resp/content-type "application/json;charset=UTF-8")))
+
+;;-----------------------------------------------------------------------------
+;; Controllers
+;;-----------------------------------------------------------------------------
+
+(defn- handle-page
+  [request page]
+  (-> (resp/resource-response page {:root "public/bm"})
+      (resp/content-type "text/html; charset=UTF-8")))
+
+(defn- handle-home
+  [request]
+  (handle-page request "html/index.html"))
+
+(defn- handle-login
+  [request]
+  (if (authentic? request)
+    (resp/redirect "/bm/")
+    (handle-page request "html/login.html")))
+
+(defn- handle-logout
+  [request]
+  (-> (resp/redirect "/bm/login/")
+      (unset-cookie! request)))
+
+(defn- handle-auth
+  [request email password]
+  (log/info " - request to auth." {:email email :password password})
+  (if-let [user (db/authentic? email password)]
+    (do
+      (log/info " - valid auth.")
+      (-> (resp/response "")
+          (cookie! request (crypto/encrypt (str user)))))
+    (do
+      (log/info " - invalid auth.")
+      (status-response 403))))
+
+(defn- handle-search
+  [terms]
+  (as-json (db/search terms)))
+
+(defn- handle-new-bookmark
+  [request name addr tags]
+  (db/bookmark! (:email (cookie request)) name addr (map string/trim (string/split tags #"[,]")))
+  (status-response 200))
 
 ;;-----------------------------------------------------------------------------
 ;; Routes
 ;;-----------------------------------------------------------------------------
 
 (defroutes main-routes
-  (GET "/bm" []
-    (resp/redirect "/bm/"))
-
-  (context "/bm" []
-
-    (GET "/" []
-      (-> (resp/resource-response "html/index.html" {:root "public/bm"})
-          (resp/content-type "text/html; charset=UTF-8")))
-
-    (GET "/login" []
-      (resp/redirect "/bm/login/"))
-
-    (GET "/login/" [:as request]
-      (if (authentic? request)
-        (resp/redirect "/bm/")
-        (-> (resp/resource-response "html/login.html" {:root "public/bm"})
-            (resp/content-type "text/html; charset=UTF-8"))))
-
-    (GET "/logout/" [:as request]
-      (-> (resp/redirect "/bm/login/")
-          (unset-cookie! request)))
-
-    (context "/api" []
-      ;;
-      (POST "/auth/" [email password :as request]
-        (log/info " - request to auth." {:email email :password password})
-        (if-let [user (db/authentic? email password)]
-          (do
-            (log/info " - valid auth.")
-            (-> (resp/response "")
-                (cookie! request (crypto/encrypt (str user)))))
-          (do
-            (log/info " - invalid auth.")
-            (status-response 403))))
-      ;;
-      (POST "/search/" [terms]
-        (as-json (db/search terms)))))
-  ;;
+  (GET "/bm" [] (resp/redirect "/bm/"))
+  (GET "/bm/" [:as request] (handle-home request))
+  (GET "/bm/login" [] (resp/redirect "/bm/login/"))
+  (GET "/bm/login/" [:as request] (handle-login request))
+  (GET "/bm/logout/" [:as request] (handle-logout request))
+  (POST "/bm/api/auth/" [email password :as req] (handle-auth req email password))
+  (POST "/bm/api/bookmark/" [name addr tags :as req] (handle-new-bookmark req name addr tags))
+  (POST "/bm/api/search/" [terms] (handle-search terms))
   (route/resources "/")
   (route/not-found "<a href='/bm/'>Page not found.</a>"))
 
 (def ^:private app (-> main-routes
                        (wrap-auth)
                        (wrap-cookie-test)
-                       (handler/site)
-                       (wrap-request-logger)))
+                       (wrap-request-logger)
+                       (handler/site)))
 
-(def ^:private server (atom nil))
+;;-----------------------------------------------------------------------------
+;; Server
+;;-----------------------------------------------------------------------------
 
+(defonce ^:private server (atom nil))
 
 (defn- start
   ([opts]

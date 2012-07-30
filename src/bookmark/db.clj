@@ -1,4 +1,6 @@
 (ns bookmark.db
+  (:import
+   com.mongodb.WriteConcern)
   (:use
    monger.operators)
   (:require
@@ -43,7 +45,6 @@
 (defn- finish-bookmark
   [b]
   (assoc b
-    :owner "keith@zentrope.com"
     :timestamp (System/currentTimeMillis)
     :id (digest/sha1 (:url b))))
 
@@ -52,7 +53,7 @@
   (let [new-b (finish-bookmark b)]
     (with-conn
       (mc/remove :bookmarks {:id (:id new-b)})
-      (mc/insert :bookmarks new-b))))
+      (mc/insert :bookmarks new-b) WriteConcern/FSYNC_SAFE)))
 
 (defn- str->words
   [string]
@@ -62,6 +63,8 @@
       (set)))
 
 (defn- re-quote
+  "Put a regex quote around a string so that the contents of the string
+   isn't interpreted as a regex itself."
   [s]
   (format "^\\Q%s\\E$" (string/trim s)))
 
@@ -114,8 +117,12 @@
       (with-conn
         (mc/insert :users {:email e :password p})))))
 
-;;-----------------------------------------------------------------------------
-;;-----------------------------------------------------------------------------
+(defn bookmark!
+  "Add a new bookmark."
+  [email name addr tags]
+  (let [bookmark (finish-bookmark {:email email :desc name :url addr :tags tags})]
+    (log/info "bookmark:" bookmark)
+    (save-bookmark bookmark)))
 
 (defn search
   [terms-string]
