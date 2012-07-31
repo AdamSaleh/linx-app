@@ -173,8 +173,13 @@
 
 (defn- handle-new-bookmark
   [request name addr tags]
-  (db/bookmark! (:email (cookie request)) name addr (map string/trim (string/split tags #"[,]")))
-  (status-response 200))
+  (try
+    (do
+      (db/bookmark! (:email (cookie request)) name addr (map string/trim (string/split tags #"[,]")))
+      (status-response 201))
+    (catch Throwable t
+      (log/error (str " - " t))
+      (status-response 400))))
 
 ;;-----------------------------------------------------------------------------
 ;; Routes

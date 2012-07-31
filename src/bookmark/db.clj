@@ -72,6 +72,11 @@
   [m]
   (dissoc m :_id))
 
+(defn- invalid-bookmark?
+  [b]
+  (or (string/blank? (:desc b))
+      (string/blank? (:url b))))
+
 ;;-----------------------------------------------------------------------------
 ;; Public
 ;;-----------------------------------------------------------------------------
@@ -121,7 +126,8 @@
   "Add a new bookmark."
   [email name addr tags]
   (let [bookmark (finish-bookmark {:email email :desc name :url addr :tags tags})]
-    (log/info "bookmark:" bookmark)
+    (when (invalid-bookmark? bookmark)
+      (throw (Exception. (str "Invalid bookmark:" bookmark))))
     (save-bookmark bookmark)))
 
 (defn search
