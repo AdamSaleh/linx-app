@@ -28,6 +28,10 @@ $(document).ready(function() {
         return $('#bm-pass').val();
     }
 
+    function join() {
+        alert("Sorry. Joining not implemented until the bookmarklet.");
+    }
+
     function authenticate() {
 
         var data = {
@@ -68,6 +72,18 @@ $(document).ready(function() {
         authenticate();
     });
 
+    $('#bm-join').click(function() {
+        //
+        // Plans: If the user presses return, the app will attempt to authenticate
+        // them. If they aren't real, it'll ask if they want to join. If the user
+        // clicks join, it'll add them to the user list. That's it!
+        //
+        // To confirm the password, just reveal a hidden form, rather than use
+        // the built-in brower versions.
+        //
+        join();
+    });
+
     $('#bm-user').keyup(onKeyEvent);
 
     $('#bm-pass').keyup(onKeyEvent);
@@ -76,6 +92,4 @@ $(document).ready(function() {
     $('#bm-form-itself').submit(function() {
         return false;
     });
-
-    console.log("done loading.");
 });
