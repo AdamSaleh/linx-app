@@ -52,7 +52,7 @@
             (string/lower-case (name request-method))
             (name scheme)
             server-name
-            (if (= server-port 80) "" (":" server-port))
+            (if (= server-port 80) "" (str ":" server-port))
             uri
             (if (empty? query-string) "" (str "?" query-string)))))
 

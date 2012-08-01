@@ -17,13 +17,26 @@
       </div>
 
       <div id="bookmarklet">
-        <a href="javascript:(function() {
-                   var jsCode = document.createElement('script');
-                   jsCode.id='a1-code';
-                   jsCode.setAttribute('src', 'http://linx.entity.local/bm/js/bookmarklet.js');
-                   document.body.appendChild(jsCode);
-                 }());" title="linx">linx++</a>
+        <p>Drag the following link to your bookmark bar:
+          <span class="bookmarklet-link">
+            <script>
+                var d = document;
+                var l = location.href;
+                var j = l + 'js/bookmarklet.js';
+                var s ="<a href='";
+                s += "javascript:(function() {";
+                s += "var jsCode=document.createElement(\"script\");";
+                s += "jsCode.setAttribute(\"id\",\"a1-code\");";
+                s += "jsCode.setAttribute(\"hb\",\"" + l + "\");";
+                s += "jsCode.setAttribute(\"src\",\"" + j + "\");";
+                s += "document.body.appendChild(jsCode);})();' ";
+                s += "title='bookmarklet'>linx++</a>";
+                document.write(s);
+            </script>.
+          </span>
+        </p>
       </div>
+
       <div id="bm-tool">
 
         <div id="bm-functions">

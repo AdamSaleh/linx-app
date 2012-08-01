@@ -8,10 +8,14 @@
         var html = "";
         html += "<label for='" + id + "'>";
         html += "  <span class='prompt'>" + prompt + "</span>";
-        html += "  <span class='widget'><input id='" + id + "' value='" + value + "'/></span>";
+        html += "  <span class='widget'>";
+        html += "    <input id='" + id + "' value='" + value + "'/>";
+        html += "  </span>";
         html += "</label>";
         return html;
     }
+
+    console.log("b");
 
     function kraken() {
         console.log("kraken");
@@ -54,13 +58,19 @@
         $('#a1').delay(100).fadeIn(200, function() { console.log("fade in complete") });
     }
 
+    console.log("c");
+
     function showForm() {
         $('#a1').show();
     }
 
+    console.log("d");
+
     function loadStyles() {
         console.log("load-styles");
-        var l = "<link id='a1-style' rel='stylesheet' type='text/css' href='http://linx.entity.local/bm/css/bookmarklet.css'/>";
+        var href = $('#a1-code').attr('hb') + 'css/bookmarklet.css';
+        console.log("css at:" + href);
+        var l = "<link id='a1-style' rel='stylesheet' type='text/css' href='" + href + "'/>";
         $('head').append(l);
     }
 
@@ -75,22 +85,25 @@
 
     function loadJquery() {
         try {
-        if ( $ === window.jQuery) {
-            kraken();
-            return;
-        }
+            console.log("testing for jquery presence");
+            if ( $ === window.jQuery) {
+                console.log("found it, rendering.");
+                kraken();
+                return;
+            }
+            console.log("Didn't find it.");
         }
 
         catch (exception) {
-
-            console.log("loading jquery");
-            var script = document.createElement( 'script' );
-            script.src = 'http://code.jquery.com/jquery-1.7.2.min.js';
-            script.onload=kraken;
-            document.body.appendChild(script);
         }
+        console.log("loading jquery");
+        var script = document.createElement( 'script' );
+        script.src = 'http://code.jquery.com/jquery-1.7.2.min.js';
+        script.onload=kraken;
+        document.body.appendChild(script);
     }
 
+    console.log("starting jquery");
     loadJquery();
 
 }());
