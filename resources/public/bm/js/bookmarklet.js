@@ -2,8 +2,6 @@
 
 (function() {
 
-    console.log("start");
-
     function labelWidget(id, prompt, value) {
         var html = "";
         html += "<label for='" + id + "'>";
@@ -15,10 +13,43 @@
         return html;
     }
 
-    console.log("b");
+    function postBookmark() {
+        var url = $('#a1-code').attr('hb') + '/bm/bookmark/';
 
-    function kraken() {
-        console.log("kraken");
+        var data = {
+            "name" : $('#a1-desc').val(),
+            "addr" : $('#a1-addr').val(),
+            "tags" : $('#a1-tags').val(),
+            "cuid" : $('#a1-code').attr('uid')
+        };
+
+        function onSuccess(data, textStatus, jqXHR) {
+            cleanUp();
+        }
+
+        function onError(jqXHR, textStatus, errorThrown) {
+            console.log("----error----");
+            console.log(jqXHR);
+            console.log(textStatus);
+            console.log(errorThrown);
+            console.log(jqXHR.status);
+            cleanUp();
+        }
+
+        console.log(url);
+        console.log(data);
+
+        $.ajax({
+            type: 'POST',
+            url: url,
+            data: data,
+            success: onSuccess,
+            error: onError,
+            dataType: 'json'
+        });
+    }
+
+    function capture() {
         if ($('#a1').length > 0) {
             $('#a1').remove();
         }
@@ -37,73 +68,64 @@
         html += "</div>";
         html += "<div class='a1-controls'>";
         html += "<a id='a1-save'>save</a> ";
-        html += "<a id='a1-cancel'>dismiss</a>";
+        html += "<a id='a1-dismiss'>dismiss</a>";
         html += "</div>";
         html += "</div>";
 
         $('body').append(html);
 
-        console.log("showing.");
-
         $('#a1-save').click(function() {
-            $('#a1').fadeOut(500, cleanUp);
+            postBookmark();
         });
 
-        $('#a1-cancel').click(function() {
-            $('#a1').fadeOut(500, cleanUp);
+        $('#a1-dismiss').click(function() {
+            cleanUp();
         });
 
-        console.log("fade in:");
-        console.log($('#a1'));
-        $('#a1').delay(100).fadeIn(200, function() { console.log("fade in complete") });
+        $('#a1').delay(100).fadeIn(200, function() {
+        });
     }
-
-    console.log("c");
 
     function showForm() {
         $('#a1').show();
     }
 
-    console.log("d");
-
     function loadStyles() {
-        console.log("load-styles");
-        var href = $('#a1-code').attr('hb') + 'css/bookmarklet.css';
-        console.log("css at:" + href);
-        var l = "<link id='a1-style' rel='stylesheet' type='text/css' href='" + href + "'/>";
+        var href = $('#a1-code').attr('hb') + '/bm/css/bookmarklet.css';
+
+        var l = "<link id='a1-style' rel='stylesheet' ";
+            l += "type='text/css' href='" + href + "'/>";
         $('head').append(l);
     }
 
     function cleanUp() {
-        console.log("cleanup");
-        if ( $ === window.jQuery) {
+        if ($ !== window.jQuery)
+            return;
+
+        $('#a1').fadeOut(500, function() {
             $('#a1').remove();
             $('#a1-style').remove();
             $('#a1-code').remove();
-        }
+        });
     }
 
     function loadJquery() {
         try {
-            console.log("testing for jquery presence");
             if ( $ === window.jQuery) {
-                console.log("found it, rendering.");
-                kraken();
+                capture();
                 return;
             }
-            console.log("Didn't find it.");
         }
 
         catch (exception) {
         }
-        console.log("loading jquery");
+
         var script = document.createElement( 'script' );
         script.src = 'http://code.jquery.com/jquery-1.7.2.min.js';
-        script.onload=kraken;
+        script.onload=capture;
         document.body.appendChild(script);
     }
 
-    console.log("starting jquery");
     loadJquery();
 
 }());

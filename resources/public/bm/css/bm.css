@@ -2,43 +2,99 @@ html, body {
     font-family: helvetica-neue, "Helvetica Neue";
 }
 
-div#content {
+/**
+ * TODO: Separate borders from other rules. Just add them on
+ * extra.
+ *
+ * <div class='search shadow-box'>
+ * </div>
+ *
+ * In this way, you can adjust the types of decoration in one
+ * place, and also have some hope of using consistent decorations.
+ *
+ * Maybe likewise with padding concerns.
+ */
+
+.content {
     width: 700px;
     margin: auto;
 }
 
-div#header {
+/** header **/
+
+.header {
     margin-top: 50px;
     margin-bottom: 12pt;
     text-align: center;
     color: #678;
 }
 
-div#header h1 {
+.header h1 {
     font-variant: small-caps;
     font-size: 24pt;
     letter-spacing: 1.2px;
     font-weight: normal;
 }
 
-div#bm-tool {
+/** bookmarklet **/
+
+.bookmarklet {
+    margin: 0 auto;
+    width: 66%;
+    text-align: center;
+    margin-bottom: 1em;
 }
 
-div#bm-tool button {
+.bookmarklet-link {
+    border: 1px solid #666;
+    background: #9ab;
+    border-radius: 10px;
+    padding: 0 4px 2px 4px;
+    font-size: 10pt;
+    font-variant: small-caps;
+    font-weight: bold;
+    letter-spacing: 1.2px;
+    margin: auto;
+    width: 5em;
+    box-shadow: 0 0 3px 0px #444;
+    text-shadow: 0 0 3px #111;
+}
+
+.bookmarklet-help {
+    display: block;
+    font-size: 10pt;
+    font-style: italic;
+    margin-top: 3px;
+    color: #777;
+}
+
+.bookmarklet-link a {
+    text-decoration: none;
+    color: white;
+    cursor: move;
+}
+
+.bookmarklet-link a:hover {
+    text-decoration: none;
+}
+
+/** page tools **/
+
+.bm-tool button {
     font-variant: small-caps;
 }
 
-div#bm-tool div#bm-functions {
+.bm-functions {
     text-align: center;
     margin-bottom: 12pt;
 }
 
-div#bm-tool div#bm-search {
+div.bm-search {
     color: #369;
     margin-bottom: 12pt;
 }
 
-div#bm-tool div#bm-search input {
+div.bm-search input {
     border: 1px solid #9ab;
     font-size: 14pt;
     padding: 5px;
@@ -46,31 +102,31 @@ div#bm-tool div#bm-search input {
     border-radius: 3px;
     width: 98%;
     outline: none;
-    box-shadow: 0px 0px 4px 0px #aaa;
+    box-shadow: 0 0 4px 0 #aaa;
 }
 
-div#bm-tool div#bm-form {
+.form {
     border: 1px solid #9ab;
-    box-shadow: 0px 0px 4px 0px #aaa;
+    box-shadow: 0 0 4px 0 #aaa;
     padding: 10px;
     border-radius: 3px;
     background: #dee4eb;
     margin-bottom: 12pt;
 }
 
-div#bm-tool div#bm-form label {
+.form label {
     display: block;
     margin-bottom: 6pt;
 }
 
-div#bm-tool label span.prompt {
+.form label .prompt {
     display: block;
     font-size: 10pt;
     font-style: italic;
     color: #234;
 }
 
-div#bm-tool label span.widget input {
+.form label .widget input {
     width: 98%;
     border: 1px solid #9ab;
     font-size: 14pt;
@@ -80,21 +136,18 @@ div#bm-tool label span.widget input {
     outline: none;
 }
 
-/** LIST **/
+/** search results list **/
 
-div#bm-list {
-}
-
-div#bm-list table {
+div.bm-list table {
     width: 100%;
 }
 
-div#bm-list tr {
+div.bm-list tr {
     border-bottom: 1px solid #9ab;
     color: #9ab;
 }
 
-div#bm-list th {
+div.bm-list th {
     font-variant: small-caps;
     font-size: 10pt;
     padding: 4px;
@@ -103,41 +156,41 @@ div#bm-list th {
     font-weight: bold;
 }
 
-div#bm-list td {
+div.bm-list td {
     font-size: 10pt;
     padding: 4px;
 }
 
-div#bm-list td a {
+div.bm-list td a {
     color: #369;
     text-decoration: none;
 }
 
-div#bm-list td a:hover {
+div.bm-list td a:hover {
     color: darkred;
     text-decoration: none;
 }
 
-div#bm-list tr:hover {
+div.bm-list tr:hover {
     background: #dee4eb;
 }
 
-/** FOOTER **/
+/** footer **/
 
-div#footer {
+div.footer {
     margin-top: 50px;
 }
 
-div#footer p {
+div.footer p {
     font-size: 10pt;
     text-align: center;
     color: #678;
 }
 
-div#footer a {
+div.footer a {
     color: #369;
 }
 
-div#footer a:hover {
+div.footer a:hover {
     color: darkred;
 }

@@ -5,6 +5,7 @@
   (:require
    [bookmark.db :as db]
    [bookmark.crypto :as crypto]
+   [bookmark.views :as views]
    [compojure.route :as route]
    [compojure.handler :as handler]
    [ring.adapter.jetty :as jetty]
@@ -63,7 +64,7 @@
     (or (.startsWith u "/bm/login")
         (.startsWith u "/bm/css")
         (.startsWith u "/bm/js")
-        (.startsWith u "/bm/html")
+        (.startsWith u "/bm/bookmark/")
         (.startsWith u "/bm/api/auth"))))
 
 (defn- authentic?
@@ -119,7 +120,8 @@
           (handler request)
           :else
           (do
-            (log/info (format " - Denied access on %s, sending to /bm/login/." (:uri request)))
+            (log/info (format " - Denied access on %s, sending to /bm/login/."
+                              (:uri request)))
             (resp/redirect "/bm/login/")))))
 
 ;;-----------------------------------------------------------------------------
@@ -135,20 +137,15 @@
 ;; Controllers
 ;;-----------------------------------------------------------------------------
 
-(defn- handle-page
-  [request page]
-  (-> (resp/resource-response page {:root "public/bm"})
-      (resp/content-type "text/html; charset=UTF-8")))
-
 (defn- handle-home
   [request]
-  (handle-page request "html/index.html"))
+  (views/home-page request))
 
 (defn- handle-login
   [request]
   (if (authentic? request)
     (resp/redirect "/bm/")
-    (handle-page request "html/login.html")))
+    (views/login-page request)))
 
 (defn- handle-logout
   [request]
@@ -175,25 +172,50 @@
   [request name addr tags]
   (try
     (do
-      (db/bookmark! (:email (cookie request)) name addr (map string/trim (string/split tags #"[,]")))
+      (db/bookmark! (:email (cookie request)) name addr
+                    (map string/trim (string/split tags #"[,]")))
       (status-response 201))
     (catch Throwable t
       (log/error (str " - " t))
       (status-response 400))))
+
+(defn- handle-remote-add
+  [req name addr tags cuid]
+  (let [user (read-string (crypto/decrypt cuid))]
+    (if (db/authentic? (:email user) (:password user) :is-md5?)
+      (do
+        (db/bookmark! (:email user)
+                      name
+                      addr
+                      (map string/trim (string/split tags #"[,]")))
+        (-> (status-response 201)
+            (resp/header "Access-Control-Allow-Origin" "*")))
+      (do
+        (status-response 401)))))
 
 ;;-----------------------------------------------------------------------------
 ;; Routes
 ;;-----------------------------------------------------------------------------
 
 (defroutes main-routes
-  (GET "/bm" [] (resp/redirect "/bm/"))
-  (GET "/bm/" [:as request] (handle-home request))
-  (GET "/bm/login" [] (resp/redirect "/bm/login/"))
-  (GET "/bm/login/" [:as request] (handle-login request))
-  (GET "/bm/logout/" [:as request] (handle-logout request))
-  (POST "/bm/api/auth/" [email password :as req] (handle-auth req email password))
-  (POST "/bm/api/bookmark/" [name addr tags :as req] (handle-new-bookmark req name addr tags))
-  (POST "/bm/api/search/" [terms] (handle-search terms))
+  (GET "/bm" []
+    (resp/redirect "/bm/"))
+  (GET "/bm/" [:as request]
+    (handle-home request))
+  (GET "/bm/login" []
+    (resp/redirect "/bm/login/"))
+  (GET "/bm/login/" [:as request]
+    (handle-login request))
+  (GET "/bm/logout/" [:as request]
+    (handle-logout request))
+  (POST "/bm/bookmark/" [name addr tags cuid :as req]
+    (handle-remote-add req name addr tags cuid))
+  (POST "/bm/api/auth/" [email password :as req]
+    (handle-auth req email password))
+  (POST "/bm/api/bookmark/" [name addr tags :as req]
+    (handle-new-bookmark req name addr tags))
+  (POST "/bm/api/search/" [terms]
+    (handle-search terms))
   (route/resources "/")
   (route/not-found "<a href='/bm/'>Page not found.</a>"))
 

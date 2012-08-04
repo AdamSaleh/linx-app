@@ -74,12 +74,13 @@ $(document).ready(function() {
 
     $('#bm-join').click(function() {
         //
-        // Plans: If the user presses return, the app will attempt to authenticate
-        // them. If they aren't real, it'll ask if they want to join. If the user
-        // clicks join, it'll add them to the user list. That's it!
+        // Plans: If the user presses return, the app will attempt to
+        // authenticate them. If they aren't real, it'll ask if they
+        // want to join. If the user clicks join, it'll add them to
+        // the user list. That's it!
         //
-        // To confirm the password, just reveal a hidden form, rather than use
-        // the built-in brower versions.
+        // To confirm the password, just reveal a hidden form, rather
+        // than use the built-in brower versions.
         //
         join();
     });
@@ -88,7 +89,9 @@ $(document).ready(function() {
 
     $('#bm-pass').keyup(onKeyEvent);
 
+    //
     // Turn off form submit, we'll handle it here.
+    //
     $('#bm-form-itself').submit(function() {
         return false;
     });

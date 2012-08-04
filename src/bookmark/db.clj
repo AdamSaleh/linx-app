@@ -77,6 +77,10 @@
   (or (string/blank? (:desc b))
       (string/blank? (:url b))))
 
+(defn- in?
+  [key seq]
+  (some #(= key %) seq))
+
 ;;-----------------------------------------------------------------------------
 ;; Public
 ;;-----------------------------------------------------------------------------
@@ -84,7 +88,6 @@
 ;;-----------------------------------------------------------------------------
 ;; TODO: Verify true(-ish) email addresses (at least in format).
 ;;-----------------------------------------------------------------------------
-
 
 ;;-----------------------------------------------------------------------------
 
@@ -111,8 +114,9 @@
 
 (defn authentic?
   "Return the user if authentic, or nil."
-  [email password]
-  (user email (digest/md5 password)))
+  [email password & opts]
+  (let [xform (if (in? :is-md5? opts) identity digest/md5)]
+    (user email (xform password))))
 
 (defn join
   [email password]
