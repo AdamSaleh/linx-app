@@ -35,14 +35,17 @@
   (html5
    [:head
     [:title "Bookmarks"]
+    [:link {:rel "apple-touch-icon" :href "/bm/pix/favicon.ico"}]
+    [:link {:rel "shortcut icon" :href "/bm/pix/favicon.ico"}]
+    [:link {:rel "icon" :type "image/vnd.microsoft.icon" :href "/bm/pix/favicon.ico"}]
     (include-js "http://code.jquery.com/jquery-1.7.2.min.js"
                 "/bm/js/login.js")
     (include-css "/bm/css/reset.css"
                  "/bm/css/bm.css"
                  "/bm/css/login.css")]
    [:body
-    [:div#content
-     [:div#header
+    [:div.content
+     [:div.header
       [:h1 "bookmarks"]]
      ;;
      [:div#login-area
@@ -66,7 +69,7 @@
          [:button#bm-login "log in"]
          [:button#bm-join "join"]]]]]
      ;;
-     [:div#footer
+     [:div.footer
       [:p "&copy; 2012 Zentrope"]]]]))
 
 (defn home-page
@@ -74,6 +77,9 @@
   (html5
    [:head
     [:title "Bookmarks"]
+    [:link {:rel "apple-touch-icon" :href "/bm/pix/favicon.ico"}]
+    [:link {:rel "shortcut icon" :href "/bm/pix/favicon.ico"}]
+    [:link {:rel "icon" :type "image/vnd.microsoft.icon" :href "/bm/pix/favicon.ico"}]
     (include-js "http://code.jquery.com/jquery-1.7.2.min.js"
                 "/bm/js/bm.js")
     (include-css "/bm/css/reset.css"

@@ -64,6 +64,7 @@
     (or (.startsWith u "/bm/login")
         (.startsWith u "/bm/css")
         (.startsWith u "/bm/js")
+        (.startsWith u "/bm/pix")
         (.startsWith u "/bm/bookmark/")
         (.startsWith u "/bm/api/auth"))))
 
