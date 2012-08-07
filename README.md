@@ -30,17 +30,17 @@ Which is what I'm going to do.
 
 What I need to implement before I consider this application done.
 
-  * <strike>Basic bookmarklet</strike>
+  * ~~Basic bookmarklet~~
 
-  * <strike>Server side app, Clojure + Mongo</strike>
+  * ~~Server side app, Clojure + Mongo~~
 
-  * <strike>Authentication via persistent, encrypted cookie</strike>
+  * ~~Authentication via persistent, encrypted cookie~~
 
   * Cool, no-fuss way to join website (capcha begone!)
 
-  * <strike>Search bookmarks</strike>
+  * ~~Search bookmarks~~
 
-  * <strike>Add bookmark</strike>
+  * ~~Add bookmark~~
 
   * Edit bookmark
 
