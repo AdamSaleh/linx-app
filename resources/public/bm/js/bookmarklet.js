@@ -82,7 +82,20 @@
             cleanUp();
         });
 
+        function keyHandler(event) {
+            if (event.keyCode == 13)
+                postBookmark();
+            if (event.keyCode == 27)
+                cleanUp();
+        }
+
+        $('#a1-desc').keyup(keyHandler);
+        $('#a1-addr').keyup(keyHandler);
+        $('#a1-tags').keyup(keyHandler);
+
+
         $('#a1').delay(100).fadeIn(200, function() {
+            $('#a1-tags').focus();
         });
     }
 

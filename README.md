@@ -48,6 +48,9 @@ What I need to implement before I consider this application done.
 
   * Display bookmarks according to logged in user
 
+  * Bookmark page should continuously update so you can see new
+    bookmarks appear
+
   * Create a generic key/value collection in Mongo for storing
     encryption keys
 
@@ -55,7 +58,7 @@ What I need to implement before I consider this application done.
 
   * Proper handling of errors via bookmark
 
-  * Proper keyboard intercepts (return, esc) for bookmark
+  * ~~Proper keyboard intercepts (return, esc) for bookmarklet~~
 
   * Store crypto key in mongo (thus the generic key/value store)
 
