@@ -72,7 +72,7 @@
   "Is the user implied by the cookie authentic?"
   [request]
   (if-let [cookie (cookie request)]
-    (db/exists? (:email cookie))
+    (db/authentic? (:email cookie) (:password cookie) :is-md5?)
     false))
 
 (defn- status-response
@@ -148,6 +148,21 @@
     (resp/redirect "/bm/")
     (views/login-page request)))
 
+(defn- handle-account-edit
+  [request]
+  (views/account-page request (cookie request)))
+
+(defn- handle-account-post
+  [email password request]
+  (log/info "email:" email "password:" password)
+  (try
+    (let [user (db/user! (:email (cookie request)) email password)]
+      (-> (resp/response "")
+          (cookie! request (crypto/encrypt (str user)))))
+    (catch Throwable t
+      (log/error t)
+      (status-response 400))))
+
 (defn- handle-logout
   [request]
   (-> (resp/redirect "/bm/login/")
@@ -209,8 +224,12 @@
     (handle-login request))
   (GET "/bm/logout/" [:as request]
     (handle-logout request))
+  (GET "/bm/account/edit/" [:as request]
+    (handle-account-edit request))
   (POST "/bm/bookmark/" [name addr tags cuid :as req]
     (handle-remote-add req name addr tags cuid))
+  (POST "/bm/api/account/" [email password :as request]
+    (handle-account-post email password request))
   (POST "/bm/api/auth/" [email password :as req]
     (handle-auth req email password))
   (POST "/bm/api/bookmark/" [name addr tags :as req]

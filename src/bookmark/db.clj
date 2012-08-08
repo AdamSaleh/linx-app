@@ -118,7 +118,19 @@
   (let [xform (if (in? :is-md5? opts) identity digest/md5)]
     (user email (xform password))))
 
+(defn user!
+  [old-email email password]
+  (let [user {:email (string/lower-case email) :password (digest/md5 password)}]
+    (with-conn
+      (mc/remove :users {:email {$regex (re-quote email) $options "i"}})
+      (mc/insert :users user))
+    user))
+
 (defn join
+  ;;
+  ;; This is broken, right? Seems to require a use to exist before
+  ;; joining. Not sure what I was thinking.
+  ;;
   [email password]
   (let [e (string/lower-case email)
         p (digest/md5 password)]

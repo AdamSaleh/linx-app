@@ -2,25 +2,16 @@
 
 (function() {
 
-    function labelWidget(id, prompt, value) {
-        var html = "";
-        html += "<label for='" + id + "'>";
-        html += "  <span class='prompt'>" + prompt + "</span>";
-        html += "  <span class='widget'>";
-        html += "    <input id='" + id + "' value='" + value + "'/>";
-        html += "  </span>";
-        html += "</label>";
-        return html;
-    }
-
     function postBookmark() {
-        var url = $('#a1-code').attr('hb') + '/bm/bookmark/';
+        var root = $('#a1-code').attr('hb');
+        var url = root + '/bm/bookmark/';
+        var login = root + '/bm/login/';
 
         var data = {
-            "name" : $('#a1-desc').val(),
-            "addr" : $('#a1-addr').val(),
-            "tags" : $('#a1-tags').val(),
-            "cuid" : $('#a1-code').attr('uid')
+            'name' : $('#a1-desc').val(),
+            'addr' : $('#a1-addr').val(),
+            'tags' : $('#a1-tags').val(),
+            'cuid' : $('#a1-code').attr('uid')
         };
 
         function onSuccess(data, textStatus, jqXHR) {
@@ -28,12 +19,21 @@
         }
 
         function onError(jqXHR, textStatus, errorThrown) {
-            console.log("----error----");
+            var html = "";
+            html += "<div class='a1-error'>";
+            html += "Unable to submit link. Maybe try ";
+            html += "<a href='" + login + "'>re-logging</a> in?";
+            html += "</div>";
+
+            console.log('----error----');
             console.log(jqXHR);
             console.log(textStatus);
             console.log(errorThrown);
             console.log(jqXHR.status);
-            cleanUp();
+
+            $('#a1').html(html);
+            setTimeout(cleanUp, 5000);
+//            cleanUp();
         }
 
         console.log(url);
@@ -52,6 +52,17 @@
     function capture() {
         if ($('#a1').length > 0) {
             $('#a1').remove();
+        }
+
+        function labelWidget(id, prompt, value) {
+            var html = "";
+            html += "<label for='" + id + "'>";
+            html += "  <span class='prompt'>" + prompt + "</span>";
+            html += "  <span class='widget'>";
+            html += "    <input id='" + id + "' value='" + value + "'/>";
+            html += "  </span>";
+            html += "</label>";
+            return html;
         }
 
         loadStyles();
@@ -93,7 +104,6 @@
         $('#a1-addr').keyup(keyHandler);
         $('#a1-tags').keyup(keyHandler);
 
-
         $('#a1').delay(100).fadeIn(200, function() {
             $('#a1-tags').focus();
         });
@@ -131,6 +141,7 @@
         }
 
         catch (exception) {
+            // Ooo! Evil!
         }
 
         var script = document.createElement( 'script' );

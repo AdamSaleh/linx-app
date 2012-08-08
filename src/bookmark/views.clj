@@ -30,6 +30,88 @@
   [request]
   [:a {:title "Linx Bookmarklet" :href (bookmarklet-script request)} "linx"])
 
+(def ^:private stock-js ["http://code.jquery.com/jquery-1.7.2.min.js"])
+
+(def ^:private stock-css ["/bm/css/reset.css"
+                          "/bm/css/bm.css"])
+(defn- layout
+  [css js content]
+  (html5
+   [:head
+    [:title "Bookmarks"]
+    [:link {:rel "apple-touch-icon" :href "/bm/pix/favicon.ico"}]
+    [:link {:rel "shortcut icon" :href "/bm/pix/favicon.ico"}]
+    [:link {:rel "icon" :type "image/vnd.microsoft.icon" :href "/bm/pix/favicon.ico"}]
+    (apply include-js stock-js)
+    (apply include-css stock-css)
+    (when (not (empty? js))
+      (include-js js))
+    (when (not (empty? css))
+      (include-css css))]
+   [:body content]))
+
+(defn account-page
+  [request user]
+  (layout
+   ""
+   "/bm/js/account.js"
+   [:div.content
+    [:div.header
+     [:h1 "Update account info"]]
+    [:div.form
+     [:form#account-form
+      [:label {:for "email"}
+       [:span.prompt "Email:"]
+       [:span.widget [:input#email {:type "text" :value (:email user)} ]]]
+      [:label {:for "new-pass"}
+       [:span.prompt "New password:"]
+       [:span.widget [:input#new-pass {:type "password" :value ""}]]]
+      [:label {:for "confirm"}
+       [:span.prompt "Confirm password:"]
+       [:span.widget [:input#confirm {:type "password" :value ""}]]]
+      [:div#bm-form-errors.form-errors]
+      [:div.bm-form-buttons
+       [:button#update "update"]
+       [:button#cancel "cancel"]]]]
+    [:div.footer
+     [:p "&copy; 2012 Zentrope"]
+     [:p [:a {:href "/bm/logout/"} "sign out"]]]]))
+
+(defn account-page
+  [request user]
+  (html5
+   [:head
+    [:title "Bookmarks"]
+    [:link {:rel "apple-touch-icon" :href "/bm/pix/favicon.ico"}]
+    [:link {:rel "shortcut icon" :href "/bm/pix/favicon.ico"}]
+    [:link {:rel "icon" :type "image/vnd.microsoft.icon" :href "/bm/pix/favicon.ico"}]
+    (include-js "http://code.jquery.com/jquery-1.7.2.min.js"
+                "/bm/js/account.js")
+    (include-css "/bm/css/reset.css"
+                 "/bm/css/bm.css")]
+   [:body
+    [:div.content
+     [:div.header
+      [:h1 "Update account info"]]
+     [:div.form
+      [:form#account-form
+       [:label {:for "email"}
+        [:span.prompt "Email:"]
+        [:span.widget [:input#email {:type "text" :value (:email user)} ]]]
+       [:label {:for "new-pass"}
+        [:span.prompt "New password:"]
+        [:span.widget [:input#new-pass {:type "password" :value ""}]]]
+       [:label {:for "confirm"}
+        [:span.prompt "Confirm password:"]
+        [:span.widget [:input#confirm {:type "password" :value ""}]]]
+       [:div#bm-form-errors.form-errors]
+       [:div.bm-form-buttons
+        [:button#update "update"]
+        [:button#cancel "cancel"]]]]
+     [:div.footer
+      [:p "&copy; 2012 Zentrope"]
+      [:p [:a {:href "/bm/logout/"} "sign out"]]]]]))
+
 (defn login-page
   [request]
   (html5
@@ -128,4 +210,7 @@
      ;;
      [:div.footer
       [:p "&copy; 2012 Zentrope"]
-      [:p [:a {:href "/bm/logout/"} "sign out"]]]]]))
+      [:p
+       [:a {:href "/bm/logout/"} "sign out"]
+       " | "
+       [:a {:href "/bm/account/edit/"} "account"]]]]]))

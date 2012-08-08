@@ -1,4 +1,4 @@
-# book-web
+# Book Web
 
 This is a practice application to help me explore some of the webapp
 techniques I've been interested in for a while, the main one of which
@@ -19,12 +19,13 @@ As it turns out, I think I have an actual use for this: I use a Mac at
 work, and a Mac at home, and I've synched bookmarks and reading-list
 links via iCloud. The links show up on my phone and iPad. Works great.
 
-But I want to keep a clean separate between my work Mac and my home
+But I want to keep a clean separation between my work Mac and my home
 Mac. If I find something of interest at work, where do I put that link
 so I can get back to it at home? Could email it. Could use one of the
-admirable third party services out there. Or I can write my own.
+admirable third party services out there. Or I could write my own
+solution.
 
-Which is what I'm going to do.
+Which is what this project aims to do.
 
 ## Goals, To Do, Loose Ends
 
@@ -36,11 +37,15 @@ What I need to implement before I consider this application done.
 
   * ~~Authentication via persistent, encrypted cookie~~
 
-  * Cool, no-fuss way to join website (capcha begone!)
-
   * ~~Search bookmarks~~
 
   * ~~Add bookmark~~
+
+  * ~~Proper keyboard intercepts (return, esc) for bookmarklet~~
+
+  * ~~Change your password/email stuff~~
+
+  * Cool, no-fuss way to join website (capcha begone!)
 
   * Edit bookmark
 
@@ -58,11 +63,11 @@ What I need to implement before I consider this application done.
 
   * Proper handling of errors via bookmark
 
-  * ~~Proper keyboard intercepts (return, esc) for bookmarklet~~
-
   * Store crypto key in mongo (thus the generic key/value store)
 
   * Rename the app as "linx"
+
+  * Make a silent movie demonstrating the app
 
   * Tidy up the server side code (but be sloppy until then).
 
