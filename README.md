@@ -51,6 +51,8 @@ What I need to implement before I consider this application done.
 
   * Delete bookmark
 
+  * Bookmarklet should handle a change in your credentials gracefully.
+
   * Display bookmarks according to logged in user
 
   * Bookmark page should continuously update so you can see new
