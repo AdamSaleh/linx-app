@@ -2,42 +2,80 @@
 
 $(document).ready(function() {
 
+    var emailId = '#bm-user';
+    var passwordId = '#bm-pass';
+    var confirmId = '#join-confirm';
+
+    var loginButtonId = '#bm-login';
+    var joinButtonId = '#bm-join';
+
+    var errorBlockId = '#bm-login-errors';
+
     var successUrl = "/bm/";
+
+    var loginMode = true;
 
     function gotoHome() {
         window.location.href = successUrl;
     }
 
     function focusForm() {
-        $('#bm-user').focus();
+        $(emailId).focus();
     }
 
     function showError() {
-        $('#bm-login-errors').fadeIn(500);
+        $(errorBlockId).fadeIn(500);
     }
 
     function hideError() {
-        $('#bm-login-errors').fadeOut(500);
+        $(errorBlockId).fadeOut(500);
     }
 
     function getEmail() {
-        return $('#bm-user').val();
+        return $(emailId).val();
     }
 
     function getPassword() {
-        return $('#bm-pass').val();
+        return $(passwordId).val();
     }
 
-    function join() {
-        alert("Sorry. Joining not implemented until the bookmarklet.");
-    }
-
-    function authenticate() {
-
+    function authentic(onSuccess, onFailure) {
         var data = {
             "email" : getEmail(),
             "password" : getPassword()
         };
+
+        $.ajax({
+            type: 'POST',
+            url: '/bm/api/auth/',
+            data: data,
+            success: onSuccess,
+            error: onFailure,
+            dataType: 'json'
+        });
+    }
+
+    function join() {
+
+        $('#confirmer').fadeIn(500);
+        $('#join-confirm').focus();
+
+        function onSuccess(data, textStatus, jqXHR) {
+            // If success, then I'm going to assume the user hit the wrong
+            // button, so I'll just log him in.
+            console.log("join-success");
+            gotoHome();
+        }
+
+        function onFailure(jqXHR, textStatus, errorThrown) {
+            console.log("failure");
+            $('#join-confirm').focus();
+        }
+
+        authentic(onSuccess, onFailure);
+    }
+
+    function login() {
 
         function onSuccess(data, textStatus, jqXHR) {
             gotoHome();
@@ -48,51 +86,40 @@ $(document).ready(function() {
             focusForm();
         }
 
-        $.ajax({
-            type: 'POST',
-            url: '/bm/api/auth/',
-            data: data,
-            success: onSuccess,
-            error: onError,
-            dataType: 'json'
-        });
+        authentic(onSuccess, onError);
+    }
+
+    function submitLoginForm() {
+        $(loginButtonId).focus();
+        $(loginButtonId).click();
+    }
+
+    function joinLoginForm() {
+        $(joinButtonId).focus();
+        $(joinButtonId).click();
     }
 
     function onKeyEvent(event) {
         hideError();
-        if (event.keyCode == 13) {
-            $('#bm-login').focus();
-            $('#bm-login').click();
-        };
+        if (event.keyCode !== 13)
+            return false;
+
+        var mode = loginMode ? loginButtonId : joinButtonId;
+
+        $(mode).focus();
+        $(mode).click();
     }
 
-    $('#bm-user').focus();
+    $(emailId).focus();
 
-    $('#bm-login').click(function() {
-        authenticate();
-    });
+    $(loginButtonId).click(function() { login(); });
 
-    $('#bm-join').click(function() {
-        //
-        // Plans: If the user presses return, the app will attempt to
-        // authenticate them. If they aren't real, it'll ask if they
-        // want to join. If the user clicks join, it'll add them to
-        // the user list. That's it!
-        //
-        // To confirm the password, just reveal a hidden form, rather
-        // than use the built-in brower versions.
-        //
-        join();
-    });
+    $(joinButtonId).click(function() { join(); });
 
-    $('#bm-user').keyup(onKeyEvent);
+    $(emailId).keyup(onKeyEvent);
+    $(passwordId).keyup(onKeyEvent);
+    $(confirmId).keyup(onKeyEvent);
 
-    $('#bm-pass').keyup(onKeyEvent);
-
-    //
-    // Turn off form submit, we'll handle it here.
-    //
-    $('#bm-form-itself').submit(function() {
-        return false;
-    });
+    // Disable submit
+    $('#login-form form').submit(function() { return false; });
 });

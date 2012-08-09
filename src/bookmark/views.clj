@@ -77,54 +77,11 @@
      [:p "&copy; 2012 Zentrope"]
      [:p [:a {:href "/bm/logout/"} "sign out"]]]]))
 
-(defn account-page
-  [request user]
-  (html5
-   [:head
-    [:title "Bookmarks"]
-    [:link {:rel "apple-touch-icon" :href "/bm/pix/favicon.ico"}]
-    [:link {:rel "shortcut icon" :href "/bm/pix/favicon.ico"}]
-    [:link {:rel "icon" :type "image/vnd.microsoft.icon" :href "/bm/pix/favicon.ico"}]
-    (include-js "http://code.jquery.com/jquery-1.7.2.min.js"
-                "/bm/js/account.js")
-    (include-css "/bm/css/reset.css"
-                 "/bm/css/bm.css")]
-   [:body
-    [:div.content
-     [:div.header
-      [:h1 "Update account info"]]
-     [:div.form
-      [:form#account-form
-       [:label {:for "email"}
-        [:span.prompt "Email:"]
-        [:span.widget [:input#email {:type "text" :value (:email user)} ]]]
-       [:label {:for "new-pass"}
-        [:span.prompt "New password:"]
-        [:span.widget [:input#new-pass {:type "password" :value ""}]]]
-       [:label {:for "confirm"}
-        [:span.prompt "Confirm password:"]
-        [:span.widget [:input#confirm {:type "password" :value ""}]]]
-       [:div#bm-form-errors.form-errors]
-       [:div.bm-form-buttons
-        [:button#update "update"]
-        [:button#cancel "cancel"]]]]
-     [:div.footer
-      [:p "&copy; 2012 Zentrope"]
-      [:p [:a {:href "/bm/logout/"} "sign out"]]]]]))
-
 (defn login-page
   [request]
-  (html5
-   [:head
-    [:title "Bookmarks"]
-    [:link {:rel "apple-touch-icon" :href "/bm/pix/favicon.ico"}]
-    [:link {:rel "shortcut icon" :href "/bm/pix/favicon.ico"}]
-    [:link {:rel "icon" :type "image/vnd.microsoft.icon" :href "/bm/pix/favicon.ico"}]
-    (include-js "http://code.jquery.com/jquery-1.7.2.min.js"
-                "/bm/js/login.js")
-    (include-css "/bm/css/reset.css"
-                 "/bm/css/bm.css"
-                 "/bm/css/login.css")]
+  (layout
+   "/bm/css/login.css"
+   "/bm/js/login.js"
    [:body
     [:div.content
      [:div.header
@@ -136,9 +93,9 @@
        [:div#bm-login-errors
         [:p#bm-error-pane "We don't recognize your account. Try again?"]]]
       ;;
-      [:div#bm-form
+      [:div#login-form.bm-form
        [:h1 "Sign in to Boomarks App"]
-       [:form#bm-form-itself {:method "post"}
+       [:form
         [:label {:for "bm-user"}
          [:span.prompt "Email:"]
          [:span.widget
@@ -147,7 +104,10 @@
          [:span.prompt "Password:"]
          [:span.widget
           [:input#bm-pass {:type "password"}]]]
-        [:div#bm-form-buttons
+        [:label#confirmer {:for "join-confirm" :style "display: none;"}
+         [:span.prompt "Confirm"]
+         [:span.widget [:input#join-confirm {:type "password"}]]]
+        [:div.form-buttons
          [:button#bm-login "log in"]
          [:button#bm-join "join"]]]]]
      ;;
