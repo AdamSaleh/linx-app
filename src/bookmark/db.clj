@@ -42,6 +42,11 @@
 
 ;;-----------------------------------------------------------------------------
 
+
+;; TODO: This whole namespace needs to be more CRUD-like. Let callers implement
+;;       stuff that seems more business-like, such as authentication and
+;;       join-ability.
+
 (defn- finish-bookmark
   [b]
   (assoc b
@@ -122,21 +127,20 @@
   [old-email email password]
   (let [user {:email (string/lower-case email) :password (digest/md5 password)}]
     (with-conn
-      (mc/remove :users {:email {$regex (re-quote email) $options "i"}})
+      (mc/remove :users {:email {$regex (re-quote old-email) $options "i"}})
       (mc/insert :users user))
     user))
 
-(defn join
-  ;;
-  ;; This is broken, right? Seems to require a use to exist before
-  ;; joining. Not sure what I was thinking.
-  ;;
+(defn join!
   [email password]
-  (let [e (string/lower-case email)
-        p (digest/md5 password)]
-    (when (authentic? email password)
-      (with-conn
-        (mc/insert :users {:email e :password p})))))
+  (if (authentic? email password)
+    (do
+      (log/info "user" email password "is authentic, can't join!")
+      nil)
+    (let [result (user! email email password)]
+      (log/info "created user" result)
+      result)))
+
 
 (defn bookmark!
   "Add a new bookmark."
@@ -147,7 +151,7 @@
     (save-bookmark bookmark)))
 
 (defn search
-  [terms-string]
+  [email terms-string]
   (let [terms (str->words terms-string)
         exprs (map #(into {} {$regex % $options "i"}) terms)
         clauses (map #(into {} {$or [{:desc %}
@@ -156,5 +160,6 @@
     (map scrub
          (with-conn
            (mql/with-collection "bookmarks"
-             (mql/find {$or clauses})
+             (mql/find {$and [{:email {$regex (re-quote email) $options "i"}}
+                              {$or clauses}]})
              (mql/sort {:desc 1}))))))

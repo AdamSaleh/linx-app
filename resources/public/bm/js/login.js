@@ -11,9 +11,16 @@ $(document).ready(function() {
 
     var errorBlockId = '#bm-login-errors';
 
-    var successUrl = "/bm/";
+    var successUrl = '/bm/';
+    var joinUrl = '/bm/api/join/';
 
     var loginMode = true;
+
+    // Utilities
+
+    function trim(stringToTrim) {
+        return stringToTrim.replace(/^\s+|\s+$/g, "");
+    }
 
     function gotoHome() {
         window.location.href = successUrl;
@@ -23,7 +30,9 @@ $(document).ready(function() {
         $(emailId).focus();
     }
 
-    function showError() {
+    function showError(msg) {
+        var defaultMsg = "We don't recognize your account. Try again?";
+        $('#bm-error-pane').html(msg == null ? defaultMsg : msg);
         $(errorBlockId).fadeIn(500);
     }
 
@@ -32,30 +41,46 @@ $(document).ready(function() {
     }
 
     function getEmail() {
-        return $(emailId).val();
+        return trim($(emailId).val());
     }
 
     function getPassword() {
-        return $(passwordId).val();
+        return trim($(passwordId).val());
     }
 
-    function authentic(onSuccess, onFailure) {
-        var data = {
-            "email" : getEmail(),
-            "password" : getPassword()
-        };
+    function getConfirmPassword() {
+        return trim($(confirmId).val());
+    }
 
-        $.ajax({
+    function callAuth(onSuccess, onFailure) {
+        var post = {
             type: 'POST',
             url: '/bm/api/auth/',
-            data: data,
+            data: { 'email' : getEmail(), 'password' : getPassword() },
             success: onSuccess,
             error: onFailure,
             dataType: 'json'
-        });
+        };
+
+        $.ajax(post);
+    }
+
+    function callJoin(onSuccess, onFailure) {
+        var post = {
+            type: 'POST',
+            url: joinUrl,
+            data: { 'email' : getEmail(), 'password' : getPassword() },
+            success: onSuccess,
+            error: onFailure,
+            dataType: 'json'
+        };
+
+        $.ajax(post);
     }
 
     function join() {
+
+        loginMode = false;
 
         $('#confirmer').fadeIn(500);
         $('#join-confirm').focus();
@@ -69,13 +94,39 @@ $(document).ready(function() {
 
         function onFailure(jqXHR, textStatus, errorThrown) {
             console.log("failure");
-            $('#join-confirm').focus();
+
+            // Check validity of passwords. If no go, show the error
+            // form. If we're good, submit the join form again.
+
+            if (getPassword().length < 8) {
+                $(passwordId).focus();
+                showError("Password needs to be > 8 characters.");
+                return;
+            }
+
+            if (getPassword() != getConfirmPassword()) {
+                $(confirmId).focus();
+                showError("Password confirmation must match.");
+                return;
+            }
+
+            function joinSuccess() {
+                gotoHome();
+            }
+
+            function joinFail(jqXHR, textStatus, errorThrown) {
+                showError("Unable to join at this time. " + textStatus);
+            }
+
+            callJoin(joinSuccess, joinFail);
         }
 
-        authentic(onSuccess, onFailure);
+        callAuth(onSuccess, onFailure);
     }
 
     function login() {
+
+        loginMode = true;
 
         function onSuccess(data, textStatus, jqXHR) {
             gotoHome();
@@ -86,23 +137,21 @@ $(document).ready(function() {
             focusForm();
         }
 
-        authentic(onSuccess, onError);
-    }
-
-    function submitLoginForm() {
-        $(loginButtonId).focus();
-        $(loginButtonId).click();
-    }
-
-    function joinLoginForm() {
-        $(joinButtonId).focus();
-        $(joinButtonId).click();
+        callAuth(onSuccess, onError);
     }
 
     function onKeyEvent(event) {
+
         hideError();
+
         if (event.keyCode !== 13)
             return false;
+
+        // If we're in log-in mode, pressing the return
+        // key will trigger the log in attempt.
+
+        // If we're in join mode, pressing the return
+        // key will trigger the join attempt.
 
         var mode = loginMode ? loginButtonId : joinButtonId;
 

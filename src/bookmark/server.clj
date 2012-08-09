@@ -66,6 +66,7 @@
         (.startsWith u "/bm/js")
         (.startsWith u "/bm/pix")
         (.startsWith u "/bm/bookmark/")
+        (.startsWith u "/bm/api/join")
         (.startsWith u "/bm/api/auth"))))
 
 (defn- authentic?
@@ -168,6 +169,14 @@
   (-> (resp/redirect "/bm/login/")
       (unset-cookie! request)))
 
+(defn- handle-join
+  [request email password]
+  (log/info " - request to join:" {:email email :password password})
+  (if-let [user (db/join! email password)]
+    (-> (resp/response "")
+        (cookie! request (crypto/encrypt (str user))))
+    (status-response 400)))
+
 (defn- handle-auth
   [request email password]
   (log/info " - request to auth." {:email email :password password})
@@ -181,8 +190,8 @@
       (status-response 403))))
 
 (defn- handle-search
-  [terms]
-  (as-json (db/search terms)))
+  [request terms]
+  (as-json (db/search (:email (cookie request)) terms)))
 
 (defn- handle-new-bookmark
   [request name addr tags]
@@ -231,11 +240,13 @@
   (POST "/bm/api/account/" [email password :as request]
     (handle-account-post email password request))
   (POST "/bm/api/auth/" [email password :as req]
-    (handle-auth req email password))
+        (handle-auth req email password))
+  (POST "/bm/api/join/" [email password :as req]
+        (handle-join req email password))
   (POST "/bm/api/bookmark/" [name addr tags :as req]
     (handle-new-bookmark req name addr tags))
-  (POST "/bm/api/search/" [terms]
-    (handle-search terms))
+  (POST "/bm/api/search/" [terms :as request]
+    (handle-search request terms))
   (route/resources "/")
   (route/not-found "<a href='/bm/'>Page not found.</a>"))
 
