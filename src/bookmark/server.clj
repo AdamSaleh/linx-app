@@ -73,7 +73,7 @@
   "Is the user implied by the cookie authentic?"
   [request]
   (if-let [cookie (cookie request)]
-    (db/authentic? (:email cookie) (:password cookie) :is-md5?)
+    (db/authentic? (:email cookie) (:password cookie))
     false))
 
 (defn- status-response
@@ -129,6 +129,16 @@
 ;;-----------------------------------------------------------------------------
 ;; Renderers
 ;;-----------------------------------------------------------------------------
+
+;; This is an example of how to extend a protocol/type someone else has
+;; already defined. Pretty neat.
+
+(defn- write-json-objectid
+  [oid out escape-unicode?]
+  (.print out (str "\"" oid "\"")))
+
+(extend org.bson.types.ObjectId clojure.data.json/Write-JSON
+        {:write-json write-json-objectid})
 
 (defn- as-json
   [data]

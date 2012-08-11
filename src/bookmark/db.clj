@@ -1,6 +1,4 @@
 (ns bookmark.db
-  (:import
-   com.mongodb.WriteConcern)
   (:use
    monger.operators)
   (:require
@@ -20,13 +18,18 @@
   (when (nil? @conn)
     (mg/connect!)
     (mg/set-db! (mg/get-db "bookmark-manager"))
+    ;;
     (mc/ensure-index :users {:email 1} {:unique true})
     (mc/ensure-index :users {:password 1})
+    ;;
     (mc/ensure-index :bookmarks {:desc 1})
     (mc/ensure-index :bookmarks {:tags 1})
-    (mc/ensure-index :bookmarks {:owner 1})
+    (mc/ensure-index :bookmarks {:email 1})
     (mc/ensure-index :bookmarks {:timestamp 1})
     (mc/ensure-index :bookmarks {:id 1} {:unique true})
+    ;;
+    (mc/ensure-index :objects {:id 1})
+    ;;
     (reset! conn :working)))
 
 (defmacro with-conn
@@ -40,26 +43,6 @@
        (log/error t#)
        (throw t#))))
 
-;;-----------------------------------------------------------------------------
-
-
-;; TODO: This whole namespace needs to be more CRUD-like. Let callers implement
-;;       stuff that seems more business-like, such as authentication and
-;;       join-ability.
-
-(defn- finish-bookmark
-  [b]
-  (assoc b
-    :timestamp (System/currentTimeMillis)
-    :id (digest/sha1 (:url b))))
-
-(defn- save-bookmark
-  [b]
-  (let [new-b (finish-bookmark b)]
-    (with-conn
-      (mc/remove :bookmarks {:id (:id new-b)})
-      (mc/insert :bookmarks new-b) WriteConcern/FSYNC_SAFE)))
-
 (defn- str->words
   [string]
   (-> (string/lower-case string)
@@ -68,98 +51,138 @@
       (set)))
 
 (defn- re-quote
-  "Put a regex quote around a string so that the contents of the string
-   isn't interpreted as a regex itself."
   [s]
   (format "^\\Q%s\\E$" (string/trim s)))
 
-(defn- scrub
-  [m]
-  (dissoc m :_id))
-
-(defn- invalid-bookmark?
-  [b]
-  (or (string/blank? (:desc b))
-      (string/blank? (:url b))))
-
-(defn- in?
-  [key seq]
-  (some #(= key %) seq))
+(defn- now
+  []
+  (System/currentTimeMillis))
 
 ;;-----------------------------------------------------------------------------
 ;; Public
 ;;-----------------------------------------------------------------------------
 
-;;-----------------------------------------------------------------------------
-;; TODO: Verify true(-ish) email addresses (at least in format).
-;;-----------------------------------------------------------------------------
+(def user-doc [:_id :email :password])
+(def bookmark-doc [:id :id :email :desc :url :tags :timestamp])
 
-;;-----------------------------------------------------------------------------
+;; Persistence API
+
+(defmulti pre-process
+  "Invoked before mutating a document in a given collection."
+  (fn [collection document] collection))
+
+(defmulti find-one
+  "Returns a single document with pkey=value, or nil."
+  (fn [collection pkey value] collection))
+
+(defmulti find-*
+  "Returns all the documents in a collection matching the key/value clauses."
+  (fn [collection & clauses] collection))
+
+(defmulti find-one*
+  "Returns a single document from a collection matching the key/value clauses."
+  (fn [collection & clauses] collection))
+
+(defmulti upsert!
+  "Replaces a document in a collection."
+  (fn [collection pkey document] collection))
+
+(defmulti remove!
+  "Removes a document where pkey=value from a collection."
+  (fn [collection pkey value] collection))
+
+;; Implementations
+
+(defmethod pre-process
+  :default
+  [collection document]
+  document)
+
+(defmethod pre-process
+  :bookmarks
+  [collection document]
+  (select-keys (assoc document
+                 :timestamp (now)
+                 :id (digest/sha1 (:url document)))
+               bookmark-doc))
+
+(defmethod pre-process
+  :users
+  [collection document]
+  (select-keys document user-doc))
+
+(defmethod find-*
+  :default
+  [collection & clauses]
+  (with-conn (mc/find-maps collection (apply hash-map clauses))))
+
+(defmethod find-one*
+  :default
+  [collection & clauses]
+  (with-conn (mc/find-one-as-map collection (apply hash-map clauses))))
+
+(defmethod find-one
+  :default
+  [collection id value]
+  (with-conn
+    (mc/find-one-as-map collection {id {$regex (re-quote value) $options "i"}})))
+
+(defmethod upsert!
+  :default
+  [collection pkey document]
+  (let [entity (pre-process collection document)]
+    (with-conn
+      (mc/remove collection {pkey {$regex (re-quote (pkey entity))} $options "i"})
+      (mc/save collection entity))))
+
+(defmethod remove!
+  :default
+  [collection pkey value]
+  (with-conn
+    (mc/remove collection {pkey {$regex (re-quote (pkey value) $options "i")}})))
+
+;; Convenience functions
 
 (defn users
-  "Return a list of users."
   []
-  (with-conn
-    (map scrub (mc/find-maps "users"))))
+  (find-* :users))
 
 (defn user
-  "Return a user matching the email address (or the password, if provided)."
   ([email]
-     (with-conn
-       (scrub (first (mc/find-maps "users" {:email {$regex (re-quote email) $options "i"}})))))
-  ([email password]
-    (with-conn
-      (scrub (first (mc/find-maps "users" {:email {$regex (re-quote email) $options "i"}
-                                           :password password}))))))
-
-(defn exists?
-  "Return true if the user using the email address exists."
-  [email]
-  (not (nil? (user email))))
-
-(defn authentic?
-  "Return the user if authentic, or nil."
-  [email password & opts]
-  (let [xform (if (in? :is-md5? opts) identity digest/md5)]
-    (user email (xform password))))
+     (find-one :users :email email))
+  ([email password-hash]
+     (find-one* :users :email email :password password-hash)))
 
 (defn user!
   [old-email email password]
-  (let [user {:email (string/lower-case email) :password (digest/md5 password)}]
-    (with-conn
-      (mc/remove :users {:email {$regex (re-quote old-email) $options "i"}})
-      (mc/insert :users user))
-    user))
+  (remove! :email old-email)
+  (upsert! :email {:email (string/lower-case email) :password (digest/md5 password)}))
 
-(defn join!
-  [email password]
-  (if (authentic? email password)
-    (do
-      (log/info "user" email password "is authentic, can't join!")
-      nil)
-    (let [result (user! email email password)]
-      (log/info "created user" result)
-      result)))
-
+(defn authentic?
+  [email password-hash]
+  (not (nil? (find-one* :users :email email :password password-hash))))
 
 (defn bookmark!
-  "Add a new bookmark."
   [email name addr tags]
-  (let [bookmark (finish-bookmark {:email email :desc name :url addr :tags tags})]
-    (when (invalid-bookmark? bookmark)
-      (throw (Exception. (str "Invalid bookmark:" bookmark))))
-    (save-bookmark bookmark)))
+  (upsert! :bookmarks :id {:email email :desc name :url addr :tags tags}))
+
+(defn exists?
+  [email]
+  (not (nil? (user email))))
+
+(defn join!
+  [email raw-password]
+  (if (not (exists? email))
+    (user! email raw-password)
+    nil))
 
 (defn search
   [email terms-string]
   (let [terms (str->words terms-string)
         exprs (map #(into {} {$regex % $options "i"}) terms)
-        clauses (map #(into {} {$or [{:desc %}
-                                     {:url %}
-                                     {:tags {$elemMatch %}}]}) exprs)]
-    (map scrub
-         (with-conn
-           (mql/with-collection "bookmarks"
-             (mql/find {$and [{:email {$regex (re-quote email) $options "i"}}
-                              {$or clauses}]})
-             (mql/sort {:desc 1}))))))
+        clauses (map #(into {} {$or [{:desc %} {:url %} {:tags {$elemMatch %}}]}) exprs)]
+    (with-conn
+      (mql/with-collection "bookmarks"
+        (mql/find {$and [{:email {$regex (re-quote email) $options "i"}}
+                         {$or clauses}]})
+        (mql/sort {:desc 1})))))

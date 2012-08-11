@@ -45,15 +45,15 @@ What I need to implement before I consider this application done.
 
   * ~~Change your password/email stuff~~
 
-  * Cool, no-fuss way to join website (capcha begone!)
+  * ~~Cool, no-fuss way to join website (capcha begone!)~~
+
+  * ~~Display bookmarks according to logged in user~~
 
   * Edit bookmark
 
   * Delete bookmark
 
   * Bookmarklet should handle a change in your credentials gracefully.
-
-  * Display bookmarks according to logged in user
 
   * Bookmark page should continuously update so you can see new
     bookmarks appear
@@ -106,7 +106,6 @@ prototyping about as quickly as possible, and because they use
 microframeworks, which I favor because they allow the problem I need
 to solve to dictate the shape the the solution, rather than the
 reverse.
-
 
 ## License
 
