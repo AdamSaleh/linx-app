@@ -160,7 +160,7 @@
 
 (defn authentic?
   [email password-hash]
-  (not (nil? (find-one* :users :email email :password password-hash))))
+  (find-one* :users :email email :password password-hash))
 
 (defn bookmark!
   [email name addr tags]

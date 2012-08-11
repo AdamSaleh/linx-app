@@ -1,53 +1,28 @@
 (ns bookmark.server
   (:gen-class)
-  (:use
-   compojure.core)
   (:require
    [bookmark.db :as db]
+   [bookmark.cookie :as cookie]
    [bookmark.crypto :as crypto]
    [bookmark.views :as views]
+   [bookmark.controller :as controller]
    [compojure.route :as route]
    [compojure.handler :as handler]
    [ring.adapter.jetty :as jetty]
    [ring.util.response :as resp]
    [clojure.string :as string]
-   [clojure.data.json :as json]
    [clojure.tools.logging :as log]))
 
-(def ^:private max-age-seconds (* 30 24 60 60)) ;; 30 days
 (def ^:private cookie-name "book-app")
 
 ;;-----------------------------------------------------------------------------
 ;; Request helpers
 ;;-----------------------------------------------------------------------------
 
-(defn- cookie
-  [request]
-  "Returns an evalution of the decrypted cookie, if it exists."
-  (if-let [cookie (get-in (:cookies request) [cookie-name :value])]
-    (read-string (crypto/decrypt cookie))
-    nil))
-
-(defn- unset-cookie!
-  [response request]
-  (resp/set-cookie response cookie-name ""
-                   {:domain (:server-name request)
-                    :port (:server-port request)
-                    :path "/bm"
-                    :max-age -1}))
-
-(defn- cookie!
-  "Adds the set-cookie command to the response."
-  [response request cookie-value]
-  (resp/set-cookie response cookie-name cookie-value {:domain (:server-name request)
-                                                      :port (:server-port request)
-                                                      :path "/bm"
-                                                      :max-age max-age-seconds}))
-
 (defn- request->str
   [request]
   (let [{:keys [uri scheme request-method server-name server-port query-string]} request
-        email (:email (cookie request))]
+        email (:email (cookie/get request))]
     (format "{:user '%s', :method '%s', :url '%s://%s%s%s%s'}"
             (if (nil? email) "unknown" email)
             (string/lower-case (name request-method))
@@ -72,8 +47,8 @@
 (defn- authentic?
   "Is the user implied by the cookie authentic?"
   [request]
-  (if-let [cookie (cookie request)]
-    (db/authentic? (:email cookie) (:password cookie))
+  (if-let [user (cookie/get request)]
+    (db/authentic? (:email user) (:password user))
     false))
 
 (defn- status-response
@@ -100,14 +75,18 @@
       (cond (nil? cookie)
             (handler request)
 
-            (let [data (read-string (crypto/decrypt cookie))]
-              (or (nil? (:email data))
-                  (nil? (:password data))))
+            (try
+              (let [data (read-string (crypto/decrypt cookie))]
+                (or (nil? (:email data))
+                    (nil? (:password data))))
+              (catch Throwable t
+                (log/error t)
+                false))
 
             (do
               (log/info " - invalid cookie, resetting.")
               (-> (resp/redirect "/bm/login/")
-                  (unset-cookie! request)))
+                  (cookie/unset! request)))
 
             :else
             (handler request)))))
@@ -127,136 +106,35 @@
             (resp/redirect "/bm/login/")))))
 
 ;;-----------------------------------------------------------------------------
-;; Renderers
-;;-----------------------------------------------------------------------------
-
-;; This is an example of how to extend a protocol/type someone else has
-;; already defined. Pretty neat.
-
-(defn- write-json-objectid
-  [oid out escape-unicode?]
-  (.print out (str "\"" oid "\"")))
-
-(extend org.bson.types.ObjectId clojure.data.json/Write-JSON
-        {:write-json write-json-objectid})
-
-(defn- as-json
-  [data]
-  (-> (resp/response (json/json-str data))
-      (resp/content-type "application/json;charset=UTF-8")))
-
-;;-----------------------------------------------------------------------------
-;; Controllers
-;;-----------------------------------------------------------------------------
-
-(defn- handle-home
-  [request]
-  (views/home-page request))
-
-(defn- handle-login
-  [request]
-  (if (authentic? request)
-    (resp/redirect "/bm/")
-    (views/login-page request)))
-
-(defn- handle-account-edit
-  [request]
-  (views/account-page request (cookie request)))
-
-(defn- handle-account-post
-  [email password request]
-  (log/info "email:" email "password:" password)
-  (try
-    (let [user (db/user! (:email (cookie request)) email password)]
-      (-> (resp/response "")
-          (cookie! request (crypto/encrypt (str user)))))
-    (catch Throwable t
-      (log/error t)
-      (status-response 400))))
-
-(defn- handle-logout
-  [request]
-  (-> (resp/redirect "/bm/login/")
-      (unset-cookie! request)))
-
-(defn- handle-join
-  [request email password]
-  (log/info " - request to join:" {:email email :password password})
-  (if-let [user (db/join! email password)]
-    (-> (resp/response "")
-        (cookie! request (crypto/encrypt (str user))))
-    (status-response 400)))
-
-(defn- handle-auth
-  [request email password]
-  (log/info " - request to auth." {:email email :password password})
-  (if-let [user (db/authentic? email password)]
-    (do
-      (log/info " - valid auth.")
-      (-> (resp/response "")
-          (cookie! request (crypto/encrypt (str user)))))
-    (do
-      (log/info " - invalid auth.")
-      (status-response 403))))
-
-(defn- handle-search
-  [request terms]
-  (as-json (db/search (:email (cookie request)) terms)))
-
-(defn- handle-new-bookmark
-  [request name addr tags]
-  (try
-    (do
-      (db/bookmark! (:email (cookie request)) name addr
-                    (map string/trim (string/split tags #"[,]")))
-      (status-response 201))
-    (catch Throwable t
-      (log/error (str " - " t))
-      (status-response 400))))
-
-(defn- handle-remote-add
-  [req name addr tags cuid]
-  (let [user (read-string (crypto/decrypt cuid))]
-    (if (db/authentic? (:email user) (:password user) :is-md5?)
-      (do
-        (db/bookmark! (:email user)
-                      name
-                      addr
-                      (map string/trim (string/split tags #"[,]")))
-        (-> (status-response 201)
-            (resp/header "Access-Control-Allow-Origin" "*")))
-      (do
-        (status-response 401)))))
-
-;;-----------------------------------------------------------------------------
 ;; Routes
 ;;-----------------------------------------------------------------------------
 
 (defroutes main-routes
-  (GET "/bm" []
-    (resp/redirect "/bm/"))
-  (GET "/bm/" [:as request]
-    (handle-home request))
-  (GET "/bm/login" []
-    (resp/redirect "/bm/login/"))
-  (GET "/bm/login/" [:as request]
-    (handle-login request))
-  (GET "/bm/logout/" [:as request]
-    (handle-logout request))
-  (GET "/bm/account/edit/" [:as request]
-    (handle-account-edit request))
-  (POST "/bm/bookmark/" [name addr tags cuid :as req]
-    (handle-remote-add req name addr tags cuid))
-  (POST "/bm/api/account/" [email password :as request]
-    (handle-account-post email password request))
-  (POST "/bm/api/auth/" [email password :as req]
-        (handle-auth req email password))
-  (POST "/bm/api/join/" [email password :as req]
-        (handle-join req email password))
-  (POST "/bm/api/bookmark/" [name addr tags :as req]
-    (handle-new-bookmark req name addr tags))
-  (POST "/bm/api/search/" [terms :as request]
-    (handle-search request terms))
+
+  (GET "/bm" [] (controller/redirect "/bm/"))
+
+  (GET "/bm/" [:as request] (controller/home-page request))
+
+  (GET "/bm/login" [] (controller/redirect "/bm/login/"))
+
+  (GET "/bm/login/" [:as request] (controller/login-page request "/bm/"))
+
+  (GET "/bm/logout/" [:as request] (controller/logout request "/bm/login/"))
+
+  (GET "/bm/account/edit/" [:as request] (controller/account-edit-page request))
+
+  (POST "/bm/bookmark/" [name addr tags cuid :as req] (controller/add-bookmark req name addr tags cuid))
+
+  (POST "/bm/api/account/" [email password :as req] (controller/update-account req email password))
+
+  (POST "/bm/api/auth/" [email password :as req] (controller/authorize req email password))
+
+  (POST "/bm/api/join/" [email password :as req] (controller/join req email password))
+
+  (POST "/bm/api/bookmark/" [name addr tags :as req] (controller/add-bookmark req name addr tags))
+
+  (POST "/bm/api/search/" [terms :as request] (controller/search request terms))
+
   (route/resources "/")
   (route/not-found "<a href='/bm/'>Page not found.</a>"))
 
