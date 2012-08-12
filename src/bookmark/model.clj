@@ -1,4 +1,4 @@
-(ns bookmark.db
+(ns bookmark.model
   (:use
    monger.operators)
   (:require
@@ -100,10 +100,10 @@
 
 (defmethod pre-process
   :bookmarks
-  [collection document]
-  (select-keys (assoc document
+  [collection bookmark]
+  (select-keys (assoc bookmark
                  :timestamp (now)
-                 :id (digest/sha1 (:url document)))
+                 :id (digest/sha1 (:url bookmark)))
                bookmark-doc))
 
 (defmethod pre-process
@@ -132,14 +132,14 @@
   [collection pkey document]
   (let [entity (pre-process collection document)]
     (with-conn
-      (mc/remove collection {pkey {$regex (re-quote (pkey entity))} $options "i"})
-      (mc/save collection entity))))
+      (mc/remove collection {pkey {$regex (re-quote (pkey entity)) $options "i"} })
+      (mc/insert-and-return collection entity))))
 
 (defmethod remove!
   :default
   [collection pkey value]
   (with-conn
-    (mc/remove collection {pkey {$regex (re-quote (pkey value) $options "i")}})))
+    (mc/remove collection {pkey {$regex (re-quote value) $options "i"}})))
 
 ;; Convenience functions
 
@@ -155,8 +155,8 @@
 
 (defn user!
   [old-email email password]
-  (remove! :email old-email)
-  (upsert! :email {:email (string/lower-case email) :password (digest/md5 password)}))
+  (remove! :users :email old-email)
+  (upsert! :users :email {:email (string/lower-case email) :password (digest/md5 password)}))
 
 (defn authentic?
   [email password-hash]

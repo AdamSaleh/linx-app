@@ -15,6 +15,10 @@
    :path cookie-path
    :max-age age})
 
+(defn raw
+  [request]
+  (get-in (:cookies request) [cookie-name :value]))
+
 (defn parse
   [cookie]
   (read-string (crypto/decrypt cookie)))
@@ -25,7 +29,7 @@
 
 (defn get
   [request]
-  (if-let [cookie (get-in (:cookies request) [cookie-name :value])]
+  (if-let [cookie (raw request)]
     (parse cookie)
     nil))
 
@@ -34,3 +38,11 @@
   (let [value  (crypto/encrypt (str (select-keys user [:email :password])))
         params (mk-params request cookie-age)]
     (response/set-cookie resp cookie-name value params)))
+
+(defn valid?
+  [request]
+  (try
+    (let [{:keys [email password]} (get request)]
+      (not (or (nil? email) (nil? password))))
+    (catch Throwable t
+      false)))

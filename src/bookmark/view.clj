@@ -1,10 +1,8 @@
-(ns bookmark.views
+(ns bookmark.view
+  (:require
+   [bookmark.cookie :as cookie])
   (:use hiccup.core
         hiccup.page))
-
-(defn- cookie
-  [request]
-  (get-in (:cookies request) ["book-app" :value]))
 
 (defn- server
   [request]
@@ -15,7 +13,7 @@
 (defn- bookmarklet-script
   [request]
   (let [s (server request)
-        c (cookie request)]
+        c (cookie/raw request)]
     (str "javascript:(function(){"
          "var d=document;"
          "var j=d.createElement('script');"
@@ -57,12 +55,14 @@
    "/bm/js/account.js"
    [:div.content
     [:div.header
-     [:h1 "Update account info"]]
+     [:h1 "update account info"]]
     [:div.form
      [:form#account-form
       [:label {:for "email"}
        [:span.prompt "Email:"]
-       [:span.widget [:input#email {:type "text" :value (:email user)} ]]]
+       ;; Disabling the email widget until we make sure all related bookmarks
+       ;; get linked properly.
+       [:span.widget [:input#email {:disable "true" :type "text" :value (:email user)} ]]]
       [:label {:for "new-pass"}
        [:span.prompt "New password:"]
        [:span.widget [:input#new-pass {:type "password" :value ""}]]]
@@ -147,8 +147,7 @@
        [:form#bm-form-itself
         [:label {:for "bm-url"}
          [:span.prompt "Bookmark URL:"]
-         [:span.widget
-          [:input#bm-title {:type "text"}]]]
+         [:span.widget [:input#bm-url {:type "text"}]]]
         [:label {:for "bm-title"}
          [:span.prompt "Description:"]
          [:span.widget [:input#bm-title {:type "text"}]]]

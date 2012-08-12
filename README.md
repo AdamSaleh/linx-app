@@ -69,6 +69,8 @@ What I need to implement before I consider this application done.
 
   * Rename the app as "linx"
 
+  * BUG: if user changes email address, need to change it across bookmarks list.
+
   * Make a silent movie demonstrating the app
 
   * Tidy up the server side code (but be sloppy until then).

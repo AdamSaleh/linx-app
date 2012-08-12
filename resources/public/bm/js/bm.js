@@ -7,6 +7,9 @@ $(document).ready(function() {
     }
 
     function renderUrl(url) {
+        if (! url)
+            return "&lt;null&gt;";
+
         if (url.length > 30)
             return url.substr(0, 30) + "...";
         else
@@ -40,12 +43,14 @@ $(document).ready(function() {
     function showBookmarkForm() {
         $('#bm-search').hide();
         $('#bm-form').show();
+        $('#bm-url').focus();
         clearBookmarkFormError();
     }
 
     function hideBookmarkForm() {
         $('#bm-form').hide();
         $('#bm-search').show();
+        $('#search-terms').focus();
     }
 
     function clearBookmarkForm() {

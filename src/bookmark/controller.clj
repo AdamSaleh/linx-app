@@ -4,8 +4,8 @@
   ;; again.
   ;;
   (:require
-   [bookmark.db :as model]
-   [bookmark.views :as view]
+   [bookmark.model :as model]
+   [bookmark.view :as view]
    [bookmark.cookie :as cookie]
    [clojure.string :as string]
    [clojure.data.json :as json]
@@ -77,7 +77,8 @@
   [request email password]
   (try
     (let [user (model/user! (:email (cookie/get request)) email password)]
-      (cookie! (response/response "") request user))
+      (log/info " - setting cookie for" user)
+      (cookie/set! (response/response "") request user))
     (catch Throwable t
       (log/error " -" t)
       (status-response 400))))
@@ -94,6 +95,7 @@
 
 (defn add-bookmark
   ([request name addr tags]
+     (log/info " - :name" name ":addr" addr ":tags" tags)
      (if-let [b (model/bookmark! (:email (cookie/get request)) name addr (parse-tags tags))]
        (status-response 201)
        (status-response 400)))
