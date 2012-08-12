@@ -51,19 +51,19 @@
 
 (defn wrap-request-logger
   [handler]
-  (log/info " - registering wrap-request-logger middleware")
+  (log/info "Registering wrap-request-logger middleware")
   (fn [request]
     (log/info (request->str request))
     (handler request)))
 
 (defn wrap-auth
   [handler public-path? redirect-to]
-  (log/info " - registering wrap-auth middleware")
+  (log/info "Registering wrap-auth middleware")
   (fn [request]
     (auth handler request public-path? redirect-to)))
 
 (defn wrap-cookie-test
   [handler public-path? redirect-to]
-  (log/info " - registering wrap-cookie-test middleware")
+  (log/info "Registering wrap-cookie-test middleware")
   (fn [request]
     (cookie-test handler request public-path? redirect-to)))

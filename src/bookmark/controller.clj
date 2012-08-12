@@ -77,7 +77,6 @@
   [request email password]
   (try
     (let [user (model/user! (:email (cookie/get request)) email password)]
-      (log/info " - setting cookie for" user)
       (cookie/set! (response/response "") request user))
     (catch Throwable t
       (log/error " -" t)
@@ -95,13 +94,14 @@
 
 (defn add-bookmark
   ([request name addr tags]
-     (log/info " - :name" name ":addr" addr ":tags" tags)
      (if-let [b (model/bookmark! (:email (cookie/get request)) name addr (parse-tags tags))]
        (status-response 201)
        (status-response 400)))
   ([request name addr tags cuid]
-     (let [user (cookie/parse cuid)]
-       (if (model/authentic? (:email user) (digest/md5 (:password user)))
-         (-> (add-bookmark request name addr tags)
-             (response/header "Access-Control-Allow-Origin" "*"))
+     (let [{:keys [email password]} (cookie/parse cuid)]
+       (if (model/authentic? email password)
+         (if (model/bookmark! email name addr (parse-tags tags))
+           (-> (status-response 201)
+               (response/header "Access-Control-Allow-Origin" "*"))
+           (status-response 400))
          (status-response 401)))))
