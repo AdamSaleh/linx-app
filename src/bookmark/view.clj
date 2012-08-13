@@ -130,7 +130,8 @@
     [:div.content
      ;;
      [:div.header
-      [:h1 "bookmarks"]]
+      [:h1 "bookmarks"]
+      [:h6 (:email (cookie/get request))]]
      ;;
      [:div.bookmarklet
       [:div.bookmarklet-link
@@ -162,10 +163,10 @@
      [:div.bm-list
       [:table#bm-table
        [:tr#bm-table-header
-        [:th "id"]
-        [:th "bookmark"]
-        [:th "address"]
-        [:th "tags"]]]]
+        [:th {:width "40%"} "bookmark"]
+        [:th {:width "30%"} "address"]
+        [:th {:width "24%"} "tags"]
+        [:th {:width "6%"} "id"]]]]
      ;;
      [:div.footer
       [:p "&copy; 2012 Zentrope"]

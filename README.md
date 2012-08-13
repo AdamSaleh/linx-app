@@ -49,9 +49,9 @@ What I need to implement before I consider this application done.
 
   * ~~Display bookmarks according to logged in user~~
 
-  * Edit bookmark
+  * ~~Delete bookmark~~
 
-  * Delete bookmark
+  * Edit bookmark
 
   * Bookmarklet should handle a change in your credentials gracefully.
 

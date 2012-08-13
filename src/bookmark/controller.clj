@@ -92,6 +92,13 @@
   [request terms]
   (as-json (model/search (:email (cookie/get request)) terms)))
 
+(defn delete-bookmark
+  [request bookmark-id]
+  ;; TODO: verify that the bookmark is owned by the requesting
+  ;; entity.
+  (model/remove! :bookmarks :id bookmark-id)
+  (status-response 201))
+
 (defn add-bookmark
   ([request name addr tags]
      (if-let [b (model/bookmark! (:email (cookie/get request)) name addr (parse-tags tags))]

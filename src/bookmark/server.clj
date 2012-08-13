@@ -8,6 +8,7 @@
    [compojure.route :as route]
    [compojure.handler :as handler]
    [ring.adapter.jetty :as jetty]
+   [swank.swank :as swank]
    [clojure.tools.logging :as log]))
 
 ;;-----------------------------------------------------------------------------
@@ -24,6 +25,7 @@
   (POST "/bm/api/auth/" [email password :as req] (controller/authorize req email password))
   (POST "/bm/api/join/" [email password :as req] (controller/join req email password))
   (POST "/bm/api/bookmark/" [name addr tags :as req] (controller/add-bookmark req name addr tags))
+  (DELETE "/bm/api/bookmark/:id/" [id :as req] (controller/delete-bookmark req id))
   (POST "/bm/api/search/" [terms :as req] (controller/search req terms))
   (route/resources "/")
   (route/not-found "<a href='/bm/'>Page not found.</a>"))
@@ -39,19 +41,27 @@
         (.startsWith u "/bm/api/join")
         (.startsWith u "/bm/api/auth"))))
 
-(def ^:private
-  app (-> main-routes
-          (middleware/wrap-auth public-path? "/bm/login/")
-          (middleware/wrap-cookie-test public-path? "/bm/login/")
-          (middleware/wrap-request-logger)
-          (handler/site)))
+(defn- start-swank
+  []
+  (log/info "Starting swank server.")
+  (swank/start-server :port 4005))
 
-(defonce ^:private
-  server (atom nil))
+(defn- stop-swank
+  []
+  (log/info "Stopping swank server.")
+  (swank/stop-server))
+
+(def ^:private app (-> main-routes
+                       (middleware/wrap-auth public-path? "/bm/login/")
+                       (middleware/wrap-cookie-test public-path? "/bm/login/")
+                       (middleware/wrap-request-logger)
+                       (handler/site)))
+
+(defonce ^:private server (atom nil))
 
 (defn- start
   ([opts]
-     (log/info "Starting server.")
+     (log/info "Starting web server.")
      (reset! server (jetty/run-jetty
                      (var app)
                      (merge {:port 8087 :join? false} opts))))
@@ -60,12 +70,12 @@
 
 (defn- stop
   []
-  (log/info "Shutting down the linx app.")
+  (log/info "Shutting down web server.")
   (when (not (nil? @server))
     (.stop @server)
     (reset! server nil)))
 
 (defn -main
   [& args]
-  (log/info "Starting up the linx app.")
+  (start-swank)
   (start {:join? true}))

@@ -2,6 +2,8 @@
 
 $(document).ready(function() {
 
+    var LINX = {};
+
     function renderTags(tags) {
         return tags.join(", ");
     }
@@ -18,18 +20,34 @@ $(document).ready(function() {
 
     function renderBookmarks(bookmarks) {
         var html = "";
+        LINX = {};
+
         for (var i = 0; i < bookmarks.length; i++) {
             var b = bookmarks[i];
             html += "<tr>";
-            html += " <td title='" + b.id + "'>" + b.id.substr(b.id.length -4, 4) + "</td>";
             html += " <td><a title='" + b.url + "' href='" + b.url + "'>" + b.desc + "</a></td>";
             html += " <td><a title='" + b.url + "' href='" + b.url + "'>" + renderUrl(b.url) + "</a></td>";
             html += " <td>" + renderTags(b.tags) + "</td>";
+            html += " <td class='bm-id' title='" + b.id + "'>";
+            html += "  <span class='mark-id'>" + b.id.substr(b.id.length -4, 4) + "</span>";
+            html += "  <span class='controls'>";
+            html += "    <span class='control edit-control' id='" + b.id + "'>&#x2710;</span>";
+            html += "    <span class='control delete-control' id='" + b.id + "'>X</span>";
+            html += "  </span>";
+            html += " </td>";
             html += "</tr>";
+            LINX[b.id] = b;
         }
 
         $('#bm-table tr:gt(0)').remove();
         $('#bm-table-header').after(html);
+
+        $('.delete-control').click(function(event) {
+            var msg = "Do you want to delete '" + LINX[this.id].desc + "'?";
+            if (confirm(msg)) {
+                deleteBookmark(this.id);
+            }
+        });
     }
 
     function showBookmarkFormError(errors) {
@@ -58,6 +76,26 @@ $(document).ready(function() {
         $('#bm-url').val('');
         $('#bm-tags').val('');
         clearBookmarkFormError();
+    }
+
+    function deleteBookmark(bookmarkId) {
+
+        function onSuccess(data, textStatus, jqXHR) {
+            lastTerms = "!";
+            postSearchTerms();
+        }
+
+        function onFailure(jqXHR, textStatus, errorThrown) {
+            console.log("Unable to delete bookmark. Sorry.");
+        }
+
+        $.ajax({
+            type: 'DELETE',
+            url: '/bm/api/bookmark/' + bookmarkId + '/',
+            success: onSuccess,
+            error: onFailure
+        });
+
     }
 
     var lastTerms = "!";

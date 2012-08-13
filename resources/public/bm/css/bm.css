@@ -36,6 +36,12 @@ html, body {
     font-weight: normal;
 }
 
+.header h6 {
+    font-weight: normal;
+    font-size: 10pt;
+    font-style: italic;
+}
+
 /** bookmarklet **/
 
 .bookmarklet {
@@ -147,6 +153,7 @@ div.bm-list tr {
     color: #9ab;
 }
 
+
 div.bm-list th {
     font-variant: small-caps;
     font-size: 10pt;
@@ -174,6 +181,42 @@ div.bm-list td a:hover {
 div.bm-list tr:hover {
     background: #dee4eb;
 }
+
+.bm-align {
+    text-align: right;
+}
+
+div.bm-list tr .mark-id {
+    display: block;
+    white-space: nowrap;
+}
+
+div.bm-list tr .controls {
+    display: none;
+    white-space: nowrap;
+}
+
+div.bm-list tr:hover .mark-id {
+    display: none;
+}
+
+div.bm-list tr:hover .controls {
+    display: block;
+}
+
+.control {
+    cursor: pointer;
+    color: #369;
+    text-variant: small-caps;
+    text-shadow: 1px 1px 1px #666;
+    font-size: 9pt;
+    font-weight: bold;
+}
+
+.control:hover {
+    color: darkred;
+}
+
 
 /** footer **/
 

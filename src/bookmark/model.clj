@@ -173,7 +173,7 @@
 (defn join!
   [email raw-password]
   (if (not (exists? email))
-    (user! email raw-password)
+    (user! email email raw-password)
     nil))
 
 (defn search
