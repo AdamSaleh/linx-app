@@ -140,10 +140,34 @@
        "Drag to your bookmark bar."]]
      ;;
      [:div.bm-tool
+      ;;
       [:div.bm-functions
        [:button#bm-new "new bookmark"]]
+      ;;
       [:div.bm-search
        [:input#search-terms {:type "text"}]]
+      ;;
+      ;; TODO: Expand this so that it can work for add and update.
+      ;;
+      [:div#edit-form.form.popup
+       [:form
+        [:hidden#edit-id]
+        [:label {:for "edit-url"}
+         [:span.prompt "Url:"]
+         [:span.widget [:input#edit-url {:type "text"}]]]
+        [:label {:for "edit-desc"}
+         [:span.prompt "Desc:"]
+         [:span.widget [:input#edit-desc {:type "text"}]]]
+        [:label {:for "edit-tags"}
+         [:span.prompt "Tags:"]
+         [:span.widget [:input#edit-tags {:type "text"}]]]
+        [:div#edit-errors.form-errors]
+        [:div.bm.form-buttons
+         [:button#edit-update "update"]
+         [:button#edit-cancel "cancel"]]]]
+      ;;
+      ;; TODO: Eventually delete this form.
+      ;;
       [:div#bm-form.form {:style "display: none;"}
        [:form#bm-form-itself
         [:label {:for "bm-url"}
@@ -158,8 +182,10 @@
         [:div#bm-form-errors.form-errors]
         [:div.bm-form-buttons
          [:button#bm-add "add"]
-         [:button#bm-cancel "cancel"]]]]]
-     ;;
+         [:button#bm-cancel "cancel"]]]]
+      ;;
+      ;;
+      ]
      [:div.bm-list
       [:table#bm-table
        [:tr#bm-table-header

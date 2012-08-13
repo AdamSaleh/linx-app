@@ -125,14 +125,14 @@ div.bm-search input {
     margin-bottom: 6pt;
 }
 
-.form label .prompt {
+.prompt {
     display: block;
     font-size: 10pt;
     font-style: italic;
     color: #234;
 }
 
-.form label .widget input {
+.widget input {
     width: 98%;
     border: 1px solid #9ab;
     font-size: 14pt;
@@ -140,6 +140,15 @@ div.bm-search input {
     color: #369;
     border-radius: 3px;
     outline: none;
+}
+
+.popup {
+    display: none;
+    position: fixed;
+    width: 600px;
+    top: 15%;
+    left: 50%;
+    margin-left: -300px;
 }
 
 /** search results list **/

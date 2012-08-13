@@ -2,53 +2,77 @@
 
 $(document).ready(function() {
 
+    // Store for the most recent search results.
+
     var LINX = {};
+    var lastTerms = "!";
 
-    function renderTags(tags) {
-        return tags.join(", ");
-    }
+    //-------------------------------------------------------------------------
+    // Display status messages
+    //-------------------------------------------------------------------------
 
-    function renderUrl(url) {
-        if (! url)
-            return "&lt;null&gt;";
 
-        if (url.length > 30)
-            return url.substr(0, 30) + "...";
-        else
-            return url;
-    }
+    //-------------------------------------------------------------------------
+    // Bookmark editing
+    //-------------------------------------------------------------------------
 
-    function renderBookmarks(bookmarks) {
-        var html = "";
-        LINX = {};
+    function updateBookmark(bookmarkId) {
 
-        for (var i = 0; i < bookmarks.length; i++) {
-            var b = bookmarks[i];
-            html += "<tr>";
-            html += " <td><a title='" + b.url + "' href='" + b.url + "'>" + b.desc + "</a></td>";
-            html += " <td><a title='" + b.url + "' href='" + b.url + "'>" + renderUrl(b.url) + "</a></td>";
-            html += " <td>" + renderTags(b.tags) + "</td>";
-            html += " <td class='bm-id' title='" + b.id + "'>";
-            html += "  <span class='mark-id'>" + b.id.substr(b.id.length -4, 4) + "</span>";
-            html += "  <span class='controls'>";
-            html += "    <span class='control edit-control' id='" + b.id + "'>&#x2710;</span>";
-            html += "    <span class='control delete-control' id='" + b.id + "'>X</span>";
-            html += "  </span>";
-            html += " </td>";
-            html += "</tr>";
-            LINX[b.id] = b;
+        function onSuccess(data, textStatus, jqXHR) {
+            hideEditForm();
+
+            lastTerms = "!" + Math.random();
+            setTimeout(postSearchTerms, 1000);
         }
 
-        $('#bm-table tr:gt(0)').remove();
-        $('#bm-table-header').after(html);
+        function onFailure(jqXHR, textStatus, errorThrown) {
+            console.log("Unable to update bookmark. Sorry.");
+            hideEditForm();
+        }
 
-        $('.delete-control').click(function(event) {
-            var msg = "Do you want to delete '" + LINX[this.id].desc + "'?";
-            if (confirm(msg)) {
-                deleteBookmark(this.id);
-            }
+        var data = {
+            url : $('#edit-url').val(),
+            desc : $('#edit-desc').val(),
+            tags : $('#edit-tags').val()
+        };
+
+        $.ajax({
+            type: 'POST',
+            url: '/bm/api/bookmark/' + bookmarkId + '/',
+            success: onSuccess,
+            error: onFailure,
+            data: data,
+            dataType: 'json'
         });
     }
+
+    function showEditForm(bookmarkId) {
+        var b = LINX[bookmarkId];
+        $('#edit-id').val(bookmarkId);
+        $('#edit-url').val(b.url);
+        $('#edit-desc').val(b.desc);
+        $('#edit-tags').val(b.tags);
+        $('#edit-form').fadeIn(500, function() {
+            $('#edit-desc').focus();
+        });
+    }
+
+    function hideEditForm() {
+        $('#edit-form').fadeOut(500, function() {
+            $('#edit-id').val('');
+            $('#edit-url').val('');
+            $('#edit-desc').val('');
+            $('#edit-tags').val('');
+        });
+    }
+
+    function submitEditForm() {
+        updateBookmark($('#edit-id').val());
+    }
+
+    //-------------------------------------------------------------------------
+    // Adding new bookmarks
+    //-------------------------------------------------------------------------
 
     function showBookmarkFormError(errors) {
         $('#bm-form-errors').html("<p>" + errors + "</p>");
@@ -78,6 +102,10 @@ $(document).ready(function() {
         clearBookmarkFormError();
     }
 
+    //-------------------------------------------------------------------------
+    // Delete bookmark
+    //-------------------------------------------------------------------------
+
     function deleteBookmark(bookmarkId) {
 
         function onSuccess(data, textStatus, jqXHR) {
@@ -95,10 +123,70 @@ $(document).ready(function() {
             success: onSuccess,
             error: onFailure
         });
-
     }
 
-    var lastTerms = "!";
+    //-------------------------------------------------------------------------
+    // Search Results
+    //-------------------------------------------------------------------------
+
+    function renderTags(tags) {
+        try {
+            return tags.join(", ");
+        }
+
+        catch (yikes) {
+            return tags;
+        }
+    }
+
+    function renderUrl(url) {
+        if (! url)
+            return "&lt;null&gt;";
+
+        if (url.length > 30)
+            return url.substr(0, 30) + "...";
+        else
+            return url;
+    }
+
+    function renderBookmarks(bookmarks) {
+        var html = "";
+        LINX = {};
+
+        for (var i = 0; i < bookmarks.length; i++) {
+            var b = bookmarks[i];
+            html += "<tr>";
+            html += "<td><a title='" + b.url + "' href='" + b.url + "'>" +
+                b.desc + "</a></td>";
+            html += "<td><a title='" + b.url + "' href='" + b.url + "'>" +
+                renderUrl(b.url) + "</a></td>";
+            html += "<td>" + renderTags(b.tags) + "</td>";
+            html += "<td class='bm-id' title='" + b.id + "'>";
+            html += " <span class='mark-id'>" + b.id.substr(b.id.length -4, 4) + "</span>";
+            html += " <span class='controls'>";
+            html += "  <span class='control edit-control' id='" + b.id + "'>&#x2710;</span>";
+            html += "  <span class='control delete-control' id='" + b.id + "'>X</span>";
+            html += " </span>";
+            html += "</td>";
+            html += "</tr>";
+            LINX[b.id] = b;
+        }
+
+        $('#bm-table tr:gt(0)').remove();
+        $('#bm-table-header').after(html);
+
+        $('.delete-control').click(function(event) {
+            var msg = "Do you want to delete '" + LINX[this.id].desc + "'?";
+            if (confirm(msg)) {
+                deleteBookmark(this.id);
+            }
+        });
+
+        $('.edit-control').click(function(event) {
+            showEditForm(this.id);
+        });
+    }
+
 
     function postSearchTerms() {
         var terms = $('#search-terms').val();
@@ -159,6 +247,16 @@ $(document).ready(function() {
 
     $('#search-terms').keyup(function() {
         postSearchTerms();
+    });
+
+    $('#edit-form form').submit(function() { return false; });
+
+    $('#edit-cancel').click(function() {
+        hideEditForm();
+    });
+
+    $('#edit-update').click(function() {
+        submitEditForm();
     });
 
     postSearchTerms();

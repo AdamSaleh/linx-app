@@ -166,6 +166,11 @@
   [email name addr tags]
   (upsert! :bookmarks :id {:email email :desc name :url addr :tags tags}))
 
+(defn replace-bookmark!
+  [email id desc url tags]
+  (remove! :bookmarks :id id)
+  (upsert! :bookmarks :id {:email email :desc desc :url url :tags tags}))
+
 (defn exists?
   [email]
   (not (nil? (user email))))

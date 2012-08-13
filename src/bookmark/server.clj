@@ -14,21 +14,43 @@
 ;;-----------------------------------------------------------------------------
 
 (defroutes main-routes
-  (GET "/bm" [] (controller/redirect "/bm/"))
-  (GET "/bm/" [:as req] (controller/home-page req))
-  (GET "/bm/login" [] (controller/redirect "/bm/login/"))
-  (GET "/bm/login/" [:as req] (controller/login-page req "/bm/"))
-  (GET "/bm/logout/" [:as req] (controller/logout req "/bm/login/"))
-  (GET "/bm/account/edit/" [:as req] (controller/account-edit-page req))
-  (POST "/bm/bookmark/" [name addr tags cuid :as req] (controller/add-bookmark req name addr tags cuid))
-  (POST "/bm/api/account/" [email password :as req] (controller/update-account req email password))
-  (POST "/bm/api/auth/" [email password :as req] (controller/authorize req email password))
-  (POST "/bm/api/join/" [email password :as req] (controller/join req email password))
-  (POST "/bm/api/bookmark/" [name addr tags :as req] (controller/add-bookmark req name addr tags))
-  (DELETE "/bm/api/bookmark/:id/" [id :as req] (controller/delete-bookmark req id))
-  (POST "/bm/api/search/" [terms :as req] (controller/search req terms))
-  (route/resources "/")
-  (route/not-found "<a href='/bm/'>Page not found.</a>"))
+  ;;
+  ;; Note: This route map isn't especially RESTy mainly because
+  ;; it assumes a lot of "context" from the cookie sent by
+  ;; the browser.
+  ;;
+  (GET "/bm" []
+    (controller/redirect "/bm/"))
+  (GET "/bm/" [:as req]
+    (controller/home-page req))
+  (GET "/bm/login" []
+    (controller/redirect "/bm/login/"))
+  (GET "/bm/login/" [:as req]
+    (controller/login-page req "/bm/"))
+  (GET "/bm/logout/" [:as req]
+    (controller/logout req "/bm/login/"))
+  (GET "/bm/account/edit/" [:as req]
+    (controller/account-edit-page req))
+  (POST "/bm/bookmark/" [name addr tags cuid :as req]
+    (controller/add-bookmark req name addr tags cuid))
+  (POST "/bm/api/account/" [email password :as req]
+    (controller/update-account req email password))
+  (POST "/bm/api/auth/" [email password :as req]
+    (controller/authorize req email password))
+  (POST "/bm/api/join/" [email password :as req]
+    (controller/join req email password))
+  (POST "/bm/api/bookmark/" [name addr tags :as req]
+    (controller/add-bookmark req name addr tags))
+  (DELETE "/bm/api/bookmark/:id/" [id :as req]
+    (controller/delete-bookmark req id))
+  (POST "/bm/api/bookmark/:id/" [id url desc tags :as req]
+    (controller/update-bookmark req id url desc tags))
+  (POST "/bm/api/search/" [terms :as req]
+    (controller/search req terms))
+  (route/resources
+    "/")
+  (route/not-found
+    "<a href='/bm/'>Page not found.</a>"))
 
 (defn- public-path?
   [request]

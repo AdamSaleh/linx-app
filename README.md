@@ -51,7 +51,7 @@ What I need to implement before I consider this application done.
 
   * ~~Delete bookmark~~
 
-  * Edit bookmark
+  * ~~Edit bookmark~~
 
   * Bookmarklet should handle a change in your credentials gracefully.
 
@@ -87,6 +87,10 @@ time.
     on other pages. (How to I properly reset everything so the style's
     my own and doesn't interfere with host pages?) I can keep working
     on this as I encounter more and more pages.
+
+  * Bullet-proofing form entries.
+
+  * Proper error reporting when submitting a form doesn't work.
 
 ## Technologies
 

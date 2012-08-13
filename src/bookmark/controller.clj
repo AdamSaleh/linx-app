@@ -99,6 +99,11 @@
   (model/remove! :bookmarks :id bookmark-id)
   (status-response 201))
 
+(defn update-bookmark
+  [request id url desc tags]
+  (model/replace-bookmark! (:email (cookie/get request)) id desc url (parse-tags tags))
+  (status-response 201))
+
 (defn add-bookmark
   ([request name addr tags]
      (if-let [b (model/bookmark! (:email (cookie/get request)) name addr (parse-tags tags))]
