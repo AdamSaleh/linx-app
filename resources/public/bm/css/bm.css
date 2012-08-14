@@ -23,6 +23,7 @@ html, body {
 /** header **/
 
 .header {
+    position: relative;
     margin-top: 50px;
     margin-bottom: 12pt;
     text-align: center;
@@ -82,6 +83,21 @@ html, body {
 
 .bookmarklet-link a:hover {
     text-decoration: none;
+}
+
+/** status **/
+
+.activity {
+    display: none;
+    position: absolute;
+    right: 0px;
+    top: 0px;
+    color: red;
+    font-style: italic;
+    font-size: 10pt;
+    background: url(/bm/pix/spin.gif);
+    height: 32px;
+    width: 32px;
 }
 
 /** page tools **/

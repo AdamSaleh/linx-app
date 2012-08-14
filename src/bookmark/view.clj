@@ -129,7 +129,10 @@
    [:body
     [:div.content
      ;;
+     ;;
      [:div.header
+      [:div.activity
+       [:span#activity]]
       [:h1 "bookmarks"]
       [:h6 (:email (cookie/get request))]]
      ;;

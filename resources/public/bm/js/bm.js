@@ -11,6 +11,34 @@ $(document).ready(function() {
     // Display status messages
     //-------------------------------------------------------------------------
 
+    //-------------------------------------------------------------------------
+    // Refresh the search results periodically in case new bookmarks come in
+    // while we're watching. (Would be more fun for the server to push these
+    // up via web sockets.)
+    //-------------------------------------------------------------------------
+
+    function startRefresher() {
+
+        var refreshInterval = 30000;
+        var timeoutInterval = 2000;
+
+        function hideActivity() {
+            $('.activity').fadeOut(1000, function() { visible = false; });
+        }
+
+        function showActivity() {
+            $('.activity').fadeIn(1000, function() {
+                setTimeout(hideActivity, timeoutInterval);
+            });
+        }
+
+        function refresh() {
+            showActivity();
+            forcePostSearchTerms();
+        }
+
+        setInterval(refresh, refreshInterval);
+    }
 
     //-------------------------------------------------------------------------
     // Bookmark editing
@@ -20,9 +48,7 @@ $(document).ready(function() {
 
         function onSuccess(data, textStatus, jqXHR) {
             hideEditForm();
-
-            lastTerms = "!" + Math.random();
-            setTimeout(postSearchTerms, 1000);
+            forcePostSearchTerms();
         }
 
         function onFailure(jqXHR, textStatus, errorThrown) {
@@ -117,6 +143,7 @@ $(document).ready(function() {
             console.log("Unable to delete bookmark. Sorry.");
         }
 
+
         $.ajax({
             type: 'DELETE',
             url: '/bm/api/bookmark/' + bookmarkId + '/',
@@ -187,12 +214,18 @@ $(document).ready(function() {
         });
     }
 
+    function forcePostSearchTerms() {
+        postSearchTerms("force");
+    }
 
-    function postSearchTerms() {
+    function postSearchTerms(force) {
         var terms = $('#search-terms').val();
-        if (terms == lastTerms)
-            return;
-        lastTerms = terms;
+        if (typeof force == "undefined") {
+            if (terms == lastTerms)
+                return;
+            lastTerms = terms;
+        };
+
         $.post('/bm/api/search/', { "terms" : terms }, function(data) {
             renderBookmarks(data);
         });
@@ -208,10 +241,10 @@ $(document).ready(function() {
         function onSuccess(data, textStatus, jqXHR) {
             // Delay invoking a refresh of the search terms
             // to give time for the server to save the data.
-            lastTerms = "!";
-            setTimeout(postSearchTerms, 1000);
+
             hideBookmarkForm();
             clearBookmarkForm();
+            forcePostSearchTerms();
         }
 
         function onError(jqXHR, textStatus, errorThrown) {
@@ -228,6 +261,8 @@ $(document).ready(function() {
             dataType: 'json'
         });
     }
+
+    //-------------------------------------------------------------------------
 
     $('#search-terms').focus();
 
@@ -260,4 +295,5 @@ $(document).ready(function() {
     });
 
     postSearchTerms();
+    startRefresher();
 });
