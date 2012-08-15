@@ -53,23 +53,21 @@ What I need to implement before I consider this application done.
 
   * ~~Edit bookmark~~
 
-  * Bookmarklet should handle a change in your credentials gracefully.
+  * ~~Bookmark page should continuously update so you can see new
+    bookmarks appear~~
 
-  * Bookmark page should continuously update so you can see new
-    bookmarks appear
+  * ~~BUG: if user changes email address, need to change it across bookmarks list.~~
 
   * Create a generic key/value collection in Mongo for storing
-    encryption keys
-
-  * Proper file based configuration
-
-  * Proper handling of errors via bookmark
+    encryption keys, config stuff, stats, anything, really.
 
   * Store crypto key in mongo (thus the generic key/value store)
 
-  * Rename the app as "linx"
+  * Proper file based configuration (just read in a JSON structure).
 
-  * BUG: if user changes email address, need to change it across bookmarks list.
+  * Proper bookmarklet handling when requests are denied
+
+  * Rename the app as "linx"
 
   * Make a silent movie demonstrating the app
 
@@ -90,7 +88,12 @@ time.
 
   * Bullet-proofing form entries.
 
-  * Proper error reporting when submitting a form doesn't work.
+  * Sensible account change. Should be one form to change email
+    address, another for password. It's kind of UX ugly to do both
+    with the same form. But it works.
+
+  * Proper error reporting when submitting a form results in a
+    non-good server response.
 
 ## Technologies
 

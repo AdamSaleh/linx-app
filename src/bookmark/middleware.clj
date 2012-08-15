@@ -43,9 +43,7 @@
   [handler request public-path? redirect-to]
   (if (or (cookie/valid? request) (public-path? request))
     (handler request)
-    (do
-      (log/error " - cookie-test: failed cookie test")
-      (cookieless-redirect request redirect-to))))
+    (cookieless-redirect request redirect-to)))
 
 ;;-----------------------------------------------------------------------------
 
@@ -53,7 +51,14 @@
   [handler]
   (log/info "Registering wrap-request-logger middleware")
   (fn [request]
-    (log/info (request->str request))
+    (let [u (:uri request)]
+      ;;
+      ;; Need a way to add a list of path fragments to omit
+      ;;
+      (when (not (or (.endsWith u "css")
+                     (.endsWith u "js")
+                     (.endsWith u "search/")))
+        (log/info (request->str request))))
     (handler request)))
 
 (defn wrap-auth

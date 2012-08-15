@@ -60,9 +60,7 @@
      [:form#account-form
       [:label {:for "email"}
        [:span.prompt "Email:"]
-       ;; Disabling the email widget until we make sure all related bookmarks
-       ;; get linked properly.
-       [:span.widget [:input#email {:disable "true" :type "text" :value (:email user)} ]]]
+       [:span.widget [:input#email {:type "text" :value (:email user)} ]]]
       [:label {:for "new-pass"}
        [:span.prompt "New password:"]
        [:span.widget [:input#new-pass {:type "password" :value ""}]]]

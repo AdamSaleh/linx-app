@@ -42,6 +42,41 @@
   [tag-string]
   (map string/trim (string/split tag-string #"[,]")))
 
+(defn- slim
+  [s]
+  (string/trim (string/lower-case s)))
+
+(defn- really=
+  [^String s1 ^String s2]
+  (= (slim s1)
+     (slim s2)))
+
+(defn- authorized-owner
+  [request bookmark-id]
+  (let [user (:email (cookie/get request))
+        owner (:email (model/find-one :bookmarks :id bookmark-id))]
+    (really= user owner)))
+
+(defn- log-unauthorized-bookmark-access
+  [request bookmark-id action]
+  (let [c (cookie/get request)
+        b (model/find-one :bookmarks :id bookmark-id)
+        e {:action action :cookie c :bookmark b}]
+    (log/error " - illegal bookmark access:" e)))
+
+(defmacro respond
+  [code & forms]
+  `(do
+     ~@forms
+     (status-response ~code)))
+
+(defn- update-bookmark!
+  [request id url desc tags]
+  (let [owner (:email (cookie/get request))
+        bookmark {:email owner :desc desc :url url :tags tags}]
+    (model/remove! :bookmarks :id id)
+    (model/upsert! :bookmarks :id bookmark)))
+
 ;;-----------------------------------------------------------------------------
 
 (defn redirect
@@ -76,7 +111,10 @@
 (defn update-account
   [request email password]
   (try
-    (let [user (model/user! (:email (cookie/get request)) email password)]
+    (let [old-email (slim (:email (cookie/get request)))
+          new-email (slim email)
+          user (model/user! old-email new-email password)]
+      (model/update! :bookmarks {:email old-email} {:email new-email})
       (cookie/set! (response/response "") request user))
     (catch Throwable t
       (log/error " -" t)
@@ -92,18 +130,6 @@
   [request terms]
   (as-json (model/search (:email (cookie/get request)) terms)))
 
-(defn delete-bookmark
-  [request bookmark-id]
-  ;; TODO: verify that the bookmark is owned by the requesting
-  ;; entity.
-  (model/remove! :bookmarks :id bookmark-id)
-  (status-response 201))
-
-(defn update-bookmark
-  [request id url desc tags]
-  (model/replace-bookmark! (:email (cookie/get request)) id desc url (parse-tags tags))
-  (status-response 201))
-
 (defn add-bookmark
   ([request name addr tags]
      (if-let [b (model/bookmark! (:email (cookie/get request)) name addr (parse-tags tags))]
@@ -117,3 +143,15 @@
                (response/header "Access-Control-Allow-Origin" "*"))
            (status-response 400))
          (status-response 401)))))
+
+(defn delete-bookmark
+  [request bookmark-id]
+  (if (authorized-owner request bookmark-id)
+    (respond 201 (model/remove! :bookmarks :id bookmark-id))
+    (respond 400 (log-unauthorized-bookmark-access request bookmark-id :delete))))
+
+(defn update-bookmark
+  [request id url desc tags]
+  (if (authorized-owner request id)
+    (respond 201 (update-bookmark! request id url desc tags))
+    (respond 400 (log-unauthorized-bookmark-access request id :update))))

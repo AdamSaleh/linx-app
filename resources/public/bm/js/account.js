@@ -136,7 +136,7 @@ $(document).ready(function() {
     $(updateButtonId).click(onUpdateClick);
     $(cancelButtonId).click(onCancelClick);
 
-    showError("This form is not yet implemented. And it's ugly. Sorry about that.");
+    showError("&nbsp;");
     $(newPassId).focus();
-    $(emailId).attr('disabled', true);
+    //$(emailId).attr('disabled', true);
 });

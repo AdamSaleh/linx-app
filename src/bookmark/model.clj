@@ -83,6 +83,10 @@
   "Returns a single document from a collection matching the key/value clauses."
   (fn [collection & clauses] collection))
 
+(defmulti update!
+  "Updates values in all the matching documents in a collection."
+  (fn [collection match-map values-map] collection))
+
 (defmulti upsert!
   "Replaces a document in a collection."
   (fn [collection pkey document] collection))
@@ -127,6 +131,11 @@
   (with-conn
     (mc/find-one-as-map collection {id {$regex (re-quote value) $options "i"}})))
 
+(defmethod update!
+  :default
+  [collection match-map values-map]
+  (mc/update collection match-map {$set values-map} :multi true))
+
 (defmethod upsert!
   :default
   [collection pkey document]
@@ -165,11 +174,6 @@
 (defn bookmark!
   [email name addr tags]
   (upsert! :bookmarks :id {:email email :desc name :url addr :tags tags}))
-
-(defn replace-bookmark!
-  [email id desc url tags]
-  (remove! :bookmarks :id id)
-  (upsert! :bookmarks :id {:email email :desc desc :url url :tags tags}))
 
 (defn exists?
   [email]

@@ -1,7 +1,8 @@
 (ns bookmark.cookie
   (:require
    [ring.util.response :as response]
-   [bookmark.crypto :as crypto])
+   [bookmark.crypto :as crypto]
+   [clojure.tools.logging :as log])
   (:refer-clojure :exclude [get]))
 
 (def cookie-name "book-app")
@@ -42,7 +43,11 @@
 (defn valid?
   [request]
   (try
-    (let [{:keys [email password]} (get request)]
-      (not (or (nil? email) (nil? password))))
+    (let [{:keys [email password] :as c} (get request)
+          answer (not (or (nil? email) (nil? password)))]
+      (when (and (not (nil? c)) (not answer))
+        (log/error " - cookie error:" c))
+      answer)
     (catch Throwable t
+      (log/error " - cookie exception:" t)
       false)))
