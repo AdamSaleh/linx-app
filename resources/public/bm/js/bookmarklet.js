@@ -2,6 +2,8 @@
 
 (function() {
 
+    var jQueryUrl = "http://code.jquery.com/jquery-1.7.2.min.js";
+
     function postBookmark() {
         var root = $('#a1-code').attr('hb');
         var url = root + '/bm/bookmark/';
@@ -21,8 +23,11 @@
         function onError(jqXHR, textStatus, errorThrown) {
             var html = "";
             html += "<div class='a1-error'>";
-            html += "Unable to submit link. Maybe try ";
-            html += "<a href='" + login + "'>re-logging</a> in?";
+            html += "<p>Unable to submit link. Maybe try ";
+            html += "<a target='_blank' href='" + login + "'>re-logging</a> in?</p>";
+            html += "<div class='a1-controls'>";
+            html += "<a id='a1-dismiss2'>dismiss</a>";
+            html += "</div>";
             html += "</div>";
 
             console.log('----error----');
@@ -32,8 +37,11 @@
             console.log(jqXHR.status);
 
             $('#a1').html(html);
+
+            $('#a1-dismiss2').click(function() {
+                cleanUp();
+            });
             setTimeout(cleanUp, 5000);
-//            cleanUp();
         }
 
         console.log(url);
@@ -50,6 +58,7 @@
     }
 
     function capture() {
+
         if ($('#a1').length > 0) {
             $('#a1').remove();
         }
@@ -116,9 +125,10 @@
     function loadStyles() {
         var href = $('#a1-code').attr('hb') + '/bm/css/bookmarklet.css';
 
-        var l = "<link id='a1-style' rel='stylesheet' ";
-            l += "type='text/css' href='" + href + "'/>";
-        $('head').append(l);
+        var link = "<link id='a1-style' rel='stylesheet' ";
+        link += "type='text/css' href='" + href + "'/>";
+
+        $('head').append(link);
     }
 
     function cleanUp() {
@@ -129,6 +139,7 @@
             $('#a1').remove();
             $('#a1-style').remove();
             $('#a1-code').remove();
+            $('#a1-jquery').remove();
         });
     }
 
@@ -144,9 +155,10 @@
             // Ooo! Evil!
         }
 
-        var script = document.createElement( 'script' );
-        script.src = 'http://code.jquery.com/jquery-1.7.2.min.js';
-        script.onload=capture;
+        var script = document.createElement('script');
+        script.id = 'a1-jquery';
+        script.src = jQueryUrl;
+        script.onload = capture;
         document.body.appendChild(script);
     }
 

@@ -128,13 +128,12 @@
 (defmethod find-one
   :default
   [collection id value]
-  (with-conn
-    (mc/find-one-as-map collection {id {$regex (re-quote value) $options "i"}})))
+  (with-conn (mc/find-one-as-map collection {id {$regex (re-quote value) $options "i"}})))
 
 (defmethod update!
   :default
   [collection match-map values-map]
-  (mc/update collection match-map {$set values-map} :multi true))
+  (with-conn (mc/update collection match-map {$set values-map} :multi true)))
 
 (defmethod upsert!
   :default
@@ -147,8 +146,7 @@
 (defmethod remove!
   :default
   [collection pkey value]
-  (with-conn
-    (mc/remove collection {pkey {$regex (re-quote value) $options "i"}})))
+  (with-conn (mc/remove collection {pkey {$regex (re-quote value) $options "i"}})))
 
 ;; Convenience functions
 
