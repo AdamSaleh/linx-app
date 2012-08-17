@@ -58,16 +58,16 @@ What I need to implement before I consider this application done.
 
   * ~~BUG: if user changes email address, need to change it across bookmarks list.~~
 
+  * ~~Proper bookmarklet handling when requests are denied~~
+
+  * ~~Rename the app as "linx"~~
+
   * Create a generic key/value collection in Mongo for storing
     encryption keys, config stuff, stats, anything, really.
 
   * Store crypto key in mongo (thus the generic key/value store)
 
   * Proper file based configuration (just read in a JSON structure).
-
-  * Proper bookmarklet handling when requests are denied
-
-  * Rename the app as "linx"
 
   * Make a silent movie demonstrating the app
 

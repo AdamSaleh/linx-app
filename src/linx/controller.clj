@@ -1,12 +1,12 @@
-(ns bookmark.controller
+(ns linx.controller
   ;;
   ;; Functions connecting http routes to the underlying model and back
   ;; again.
   ;;
   (:require
-   [bookmark.model :as model]
-   [bookmark.view :as view]
-   [bookmark.cookie :as cookie]
+   [linx.model :as model]
+   [linx.view :as view]
+   [linx.cookie :as cookie]
    [clojure.string :as string]
    [clojure.data.json :as json]
    [clojure.tools.logging :as log]

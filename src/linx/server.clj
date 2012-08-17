@@ -1,10 +1,10 @@
-(ns bookmark.server
+(ns linx.server
   (:gen-class)
   (:use
    compojure.core)
   (:require
-   [bookmark.controller :as controller]
-   [bookmark.middleware :as middleware]
+   [linx.controller :as controller]
+   [linx.middleware :as middleware]
    [compojure.route :as route]
    [compojure.handler :as handler]
    [ring.adapter.jetty :as jetty]

@@ -13,5 +13,4 @@
                  [digest "1.3.0"]
                  [com.novemberain/monger "1.1.0"]
                  [ch.qos.logback/logback-classic "1.0.0"]]
-  :run-aliases {:db-init bookmark.migration}
-  :main bookmark.server)
+  :main linx.server)

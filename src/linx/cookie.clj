@@ -1,7 +1,7 @@
-(ns bookmark.cookie
+(ns linx.cookie
   (:require
    [ring.util.response :as response]
-   [bookmark.crypto :as crypto]
+   [linx.crypto :as crypto]
    [clojure.tools.logging :as log])
   (:refer-clojure :exclude [get]))
 

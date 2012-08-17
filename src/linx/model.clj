@@ -1,4 +1,4 @@
-(ns bookmark.model
+(ns linx.model
   (:use
    monger.operators)
   (:require

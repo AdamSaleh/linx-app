@@ -1,10 +1,10 @@
-(ns bookmark.middleware
+(ns linx.middleware
   ;;
   ;; Functionality invoked on every request/response.
   ;;
   (:require
-   [bookmark.cookie :as cookie]
-   [bookmark.model :as model]
+   [linx.cookie :as cookie]
+   [linx.model :as model]
    [clojure.string :as string]
    [clojure.tools.logging :as log]
    [ring.util.response :as response]))
@@ -29,6 +29,7 @@
 
 (defn- cookieless-redirect
   [request to]
+  (log/info " - unsetting cookie")
   (-> (response/redirect to)
       (cookie/unset! request)))
 

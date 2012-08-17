@@ -1,6 +1,6 @@
-(ns bookmark.view
+(ns linx.view
   (:require
-   [bookmark.cookie :as cookie])
+   [linx.cookie :as cookie])
   (:use hiccup.core
         hiccup.page))
 

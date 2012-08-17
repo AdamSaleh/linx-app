@@ -1,4 +1,4 @@
-(ns bookmark.crypto
+(ns linx.crypto
   (:import
    [javax.crypto Cipher SecretKey KeyGenerator]
    [javax.crypto.spec SecretKeySpec])
