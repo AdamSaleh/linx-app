@@ -36,7 +36,7 @@
 
 (defn set!
   [resp request user]
-  (let [value  (crypto/encrypt (str (select-keys user [:email :password])))
+  (let [value (crypto/encrypt (str (select-keys user [:email :password])))
         params (mk-params request cookie-age)]
     (response/set-cookie resp cookie-name value params)))
 
@@ -45,6 +45,8 @@
   (try
     (let [{:keys [email password] :as c} (get request)
           answer (not (or (nil? email) (nil? password)))]
+      (when (nil? c)
+        (log/error " - cookie error: no cookie"))
       (when (and (not (nil? c)) (not answer))
         (log/error " - cookie error:" c))
       answer)

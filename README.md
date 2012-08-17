@@ -56,16 +56,17 @@ What I need to implement before I consider this application done.
   * ~~Bookmark page should continuously update so you can see new
     bookmarks appear~~
 
-  * ~~BUG: if user changes email address, need to change it across bookmarks list.~~
+  * ~~BUG: if user changes email address, need to change it across
+    bookmarks list.~~
 
   * ~~Proper bookmarklet handling when requests are denied~~
 
   * ~~Rename the app as "linx"~~
 
-  * Create a generic key/value collection in Mongo for storing
-    encryption keys, config stuff, stats, anything, really.
+  * ~~Create a generic key/value collection in Mongo for storing
+    encryption keys, config stuff, stats, anything, really.~~
 
-  * Store crypto key in mongo (thus the generic key/value store)
+  * ~~Store crypto key in mongo (thus the generic key/value store)~~
 
   * Proper file based configuration (just read in a JSON structure).
 

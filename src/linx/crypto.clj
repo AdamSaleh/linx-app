@@ -4,18 +4,13 @@
    [javax.crypto.spec SecretKeySpec])
   (:require
    [clojure.tools.logging :as log]
+   [linx.model :as model]
    [ring.util.codec :as codec]))
 
-;; TODO: We have two concerns, here. En/decrypting, and key management. Fix!
-
-(declare make-or-find-key)
+(declare get-key)
 
 (def ^:private algorithm "DES")
-(def ^:private secret-key (delay (make-or-find-key)))
-
-(defn- key-file
-  []
-  (str (System/getProperty "data.dir" (System/getProperty "user.dir" ".")) "/crypto.key"))
+(def ^:private secret-key (delay (get-key)))
 
 (defn- bytes->b64
   [bytes]
@@ -31,24 +26,17 @@
   ([]
      (encoded-key @secret-key)))
 
-(defn- read-key-file
-  []
-  (log/info " - reading:" (key-file))
-  (slurp (key-file)))
+(defn- put-key!
+  [key]
+  (model/upsert! :objects :id {:id "crypto.key" :value (encoded-key key)} )
+  key)
 
-(defn- save-key-file
-  [k]
-  (log/info " - writing new key file to:" (key-file))
-  (let [secret (encoded-key k)]
-    (spit (key-file) secret)
-    secret))
-
-(defn- make-or-find-key
+(defn- get-key
   []
-  (try
-    (SecretKeySpec. (b64->bytes (read-key-file)) algorithm)
-    (catch Throwable t
-      (save-key-file (.generateKey (KeyGenerator/getInstance algorithm))))))
+  (let [saved (:value (model/find-one :objects :id "crypto.key"))]
+    (if (nil? saved)
+      (put-key! (.generateKey (KeyGenerator/getInstance algorithm)))
+      (SecretKeySpec. (b64->bytes saved) algorithm))))
 
 (defn encrypt
   [string]
